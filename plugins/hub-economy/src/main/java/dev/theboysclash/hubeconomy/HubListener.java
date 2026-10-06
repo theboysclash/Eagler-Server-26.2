@@ -9,6 +9,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -19,20 +20,33 @@ public final class HubListener implements Listener {
     private final PluginConfig config;
     private final WorldService worlds;
     private final HubNpc hubNpc;
+    private final CoinSidebar coinSidebar;
 
-    public HubListener(HubEconomyPlugin plugin, PluginConfig config, WorldService worlds, HubNpc hubNpc) {
+    public HubListener(
+            HubEconomyPlugin plugin,
+            PluginConfig config,
+            WorldService worlds,
+            HubNpc hubNpc,
+            CoinSidebar coinSidebar) {
         this.plugin = plugin;
         this.config = config;
         this.worlds = worlds;
         this.hubNpc = hubNpc;
+        this.coinSidebar = coinSidebar;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onJoin(PlayerJoinEvent event) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             worlds.sendToHub(event.getPlayer());
+            coinSidebar.attach(event.getPlayer());
             event.getPlayer().sendMessage(Messages.info("Welcome to KyleTurski MC. Right-click Survival to play."));
         });
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        coinSidebar.detach(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

@@ -15,9 +15,11 @@ import java.util.Map;
 
 public final class WorthCatalog {
 
+    private static final int PRICES_VERSION = 2;
+
     private final HubEconomyPlugin plugin;
     private final File file;
-    private final Map<Material, Double> prices = new EnumMap<>(Material.class);
+    private final Map<Material, Long> prices = new EnumMap<>(Material.class);
 
     public WorthCatalog(HubEconomyPlugin plugin) {
         this.plugin = plugin;
@@ -26,10 +28,15 @@ public final class WorthCatalog {
 
     public void loadOrCreate() {
         plugin.getDataFolder().mkdirs();
-        if (!file.exists()) {
+        if (!file.exists() || needsRewrite()) {
             writeDefaults();
         }
         reloadFromDisk();
+    }
+
+    private boolean needsRewrite() {
+        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+        return config.getInt("prices-version", 0) < PRICES_VERSION;
     }
 
     public void reloadFromDisk() {
@@ -41,7 +48,11 @@ public final class WorthCatalog {
                 if (material == null) {
                     continue;
                 }
-                prices.put(material, config.getDouble("prices." + key));
+                long price = config.getLong("prices." + key, config.getInt("prices." + key, 1));
+                if (price < 1) {
+                    price = 1;
+                }
+                prices.put(material, price);
             }
         }
         for (Material material : Material.values()) {
@@ -54,6 +65,7 @@ public final class WorthCatalog {
 
     private void writeDefaults() {
         FileConfiguration config = new YamlConfiguration();
+        config.set("prices-version", PRICES_VERSION);
         for (Material material : Material.values()) {
             if (!material.isItem() || material == Material.AIR) {
                 continue;
@@ -67,24 +79,34 @@ public final class WorthCatalog {
         }
     }
 
-    public double unitPrice(Material material) {
+    public long unitPrice(Material material) {
         if (material == null || !material.isItem() || material == Material.AIR) {
-            return 0.0;
+            return 0L;
         }
-        return prices.getOrDefault(material, 1.0);
+        return prices.getOrDefault(material, 1L);
     }
 
-    public double stackUnitWorthWithEnchants(ItemStack stack) {
-        if (stack == null || stack.getType().isAir()) {
-            return 0.0;
+    public long buyPrice(Material material) {
+        long sell = unitPrice(material);
+        if (sell <= 0) {
+            return 2L;
         }
-        double unit = unitPrice(stack.getType());
-        return unit * enchantMultiplier(stack);
+        return Math.max(2L, sell * 3L);
     }
 
-    public double stackTotalWorth(ItemStack stack) {
+    public long stackUnitWorthWithEnchants(ItemStack stack) {
         if (stack == null || stack.getType().isAir()) {
-            return 0.0;
+            return 0L;
+        }
+        long unit = unitPrice(stack.getType());
+        double withEnchant = unit * enchantMultiplier(stack);
+        long rounded = Math.round(withEnchant);
+        return Math.max(unit, rounded);
+    }
+
+    public long stackTotalWorth(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) {
+            return 0L;
         }
         return stackUnitWorthWithEnchants(stack) * stack.getAmount();
     }
@@ -101,111 +123,149 @@ public final class WorthCatalog {
         return 1.0 + bonus;
     }
 
-    static double defaultPriceFor(Material material) {
+    static long defaultPriceFor(Material material) {
         String name = material.name();
-        Double explicit = explicitPrices.get(name);
+        Long explicit = explicitPrices.get(name);
         if (explicit != null) {
             return explicit;
         }
         if (isBulk(material)) {
-            return 0.25;
+            return 1L;
         }
         if (isBuilding(material)) {
-            return 1.0;
+            return buildingPrice(material);
         }
-        Double farming = farmingPrice(material);
+        Long farming = farmingPrice(material);
         if (farming != null) {
             return farming;
         }
-        Double mob = mobDropPrice(material);
+        Long mob = mobDropPrice(material);
         if (mob != null) {
             return mob;
         }
-        Double gear = gearPrice(material);
+        Long gear = gearPrice(material);
         if (gear != null) {
             return gear;
         }
-        return 1.0;
+        return 1L;
     }
 
     private static boolean isBulk(Material material) {
         String n = material.name();
-        if (n.equals("DIRT") || n.equals("COBBLESTONE") || n.equals("NETHERRACK")
-                || n.equals("SAND") || n.equals("RED_SAND") || n.equals("GRAVEL")) {
+        if (n.equals("DIRT") || n.equals("COARSE_DIRT") || n.equals("ROOTED_DIRT")
+                || n.equals("MUD") || n.equals("COBBLESTONE") || n.equals("NETHERRACK")
+                || n.equals("SAND") || n.equals("RED_SAND") || n.equals("GRAVEL")
+                || n.equals("STONE") || n.equals("TUFF") || n.equals("ANDESITE")
+                || n.equals("DIORITE") || n.equals("GRANITE") || n.equals("CALCITE")
+                || n.equals("DRIPSTONE_BLOCK") || n.equals("MOSS_BLOCK")) {
             return true;
         }
-        return n.contains("DEEPSLATE") && !n.contains("ORE") && !n.contains("INGOT");
+        if (n.contains("DEEPSLATE") && !n.contains("ORE") && !n.contains("INGOT")
+                && !n.contains("BRICK") && !n.contains("TILE")) {
+            return true;
+        }
+        return n.equals("DEEPSLATE") || n.equals("COBBLED_DEEPSLATE");
+    }
+
+    private static long buildingPrice(Material material) {
+        String n = material.name();
+        if (n.contains("CONCRETE") && !n.contains("POWDER")) {
+            return 6L;
+        }
+        if (n.contains("TERRACOTTA")) {
+            return 5L;
+        }
+        if (n.contains("WOOL")) {
+            return 4L;
+        }
+        if (n.contains("GLASS")) {
+            return 3L;
+        }
+        if (n.contains("PLANKS")) {
+            return 3L;
+        }
+        if (n.endsWith("_LOG") || n.endsWith("_STEM") || n.endsWith("_HYPHAE")) {
+            return 4L;
+        }
+        if (n.equals("SMOOTH_STONE") || n.equals("BRICKS") || n.equals("STONE_BRICKS")) {
+            return 3L;
+        }
+        return 2L;
     }
 
     private static boolean isBuilding(Material material) {
         String n = material.name();
-        if (n.equals("STONE") || n.equals("SMOOTH_STONE") || n.equals("COBBLED_DEEPSLATE")) {
+        if (n.equals("SMOOTH_STONE") || n.equals("COBBLED_DEEPSLATE")) {
             return true;
         }
         if (n.contains("PLANKS") || n.contains("GLASS") || n.contains("TERRACOTTA")
                 || n.contains("WOOL") || n.contains("CONCRETE")) {
             return true;
         }
-        return n.equals("BRICKS") || n.equals("STONE_BRICKS");
+        return n.equals("BRICKS") || n.equals("STONE_BRICKS")
+                || n.endsWith("_LOG") || n.endsWith("_STEM") || n.endsWith("_HYPHAE");
     }
 
-    private static Double farmingPrice(Material material) {
+    private static Long farmingPrice(Material material) {
         String n = material.name();
-        if (n.endsWith("_LOG") || n.endsWith("_STEM") || n.endsWith("_HYPHAE")) {
-            return 4.0;
-        }
         if (n.endsWith("_LEAVES") || n.endsWith("_SAPLING")) {
-            return 2.0;
+            return 2L;
         }
         if (n.contains("SEEDS") || n.equals("WHEAT") || n.equals("BEETROOT") || n.equals("CARROT")
                 || n.equals("POTATO") || n.equals("MELON_SLICE") || n.equals("PUMPKIN")
                 || n.equals("SWEET_BERRIES") || n.equals("GLOW_BERRIES") || n.equals("COCOA_BEANS")
                 || n.equals("SUGAR_CANE") || n.equals("BAMBOO") || n.equals("KELP") || n.equals("CACTUS")
-                || n.equals("NETHER_WART") || n.equals("CHORUS_FRUIT")) {
+                || n.equals("NETHER_WART") || n.equals("CHORUS_FRUIT") || n.equals("BONE_MEAL")) {
             return switch (n) {
-                case "WHEAT", "CARROT", "POTATO", "BEETROOT" -> 3.0;
-                case "MELON_SLICE", "SWEET_BERRIES", "GLOW_BERRIES" -> 4.0;
-                case "PUMPKIN", "CHORUS_FRUIT" -> 6.0;
-                default -> 2.0;
+                case "WHEAT", "CARROT", "POTATO", "BEETROOT" -> 3L;
+                case "MELON_SLICE", "SWEET_BERRIES", "GLOW_BERRIES" -> 4L;
+                case "PUMPKIN", "CHORUS_FRUIT" -> 6L;
+                default -> 2L;
             };
         }
         if (n.equals("BREAD") || n.equals("COOKED_BEEF") || n.equals("COOKED_PORKCHOP")
                 || n.equals("COOKED_CHICKEN") || n.equals("COOKED_MUTTON") || n.equals("COOKED_RABBIT")
                 || n.equals("COOKED_COD") || n.equals("COOKED_SALMON") || n.equals("BAKED_POTATO")
                 || n.equals("MUSHROOM_STEW") || n.equals("RABBIT_STEW") || n.equals("BEETROOT_SOUP")) {
-            return 8.0;
+            return 8L;
         }
         if (n.equals("APPLE") || n.equals("GOLDEN_CARROT")) {
-            return 6.0;
+            return 6L;
+        }
+        if (n.equals("GOLDEN_APPLE")) {
+            return 12L;
         }
         return null;
     }
 
-    private static Double mobDropPrice(Material material) {
+    private static Long mobDropPrice(Material material) {
         return switch (material) {
-            case BONE, STRING, ROTTEN_FLESH, SPIDER_EYE, GUNPOWDER -> 4.0;
-            case SLIME_BALL, MAGMA_CREAM, PHANTOM_MEMBRANE -> 8.0;
-            case BLAZE_ROD, GHAST_TEAR, SHULKER_SHELL -> 20.0;
-            case ENDER_PEARL -> 40.0;
+            case BONE, STRING, ROTTEN_FLESH, SPIDER_EYE, GUNPOWDER -> 4L;
+            case SLIME_BALL, MAGMA_CREAM, PHANTOM_MEMBRANE -> 8L;
+            case BLAZE_ROD, GHAST_TEAR, SHULKER_SHELL -> 20L;
+            case ENDER_PEARL -> 40L;
             default -> null;
         };
     }
 
-    private static Double gearPrice(Material material) {
+    private static Long gearPrice(Material material) {
         String n = material.name();
         ToolTier tier = toolTier(n);
         if (tier == null) {
             return null;
         }
         if (n.contains("HELMET") || n.contains("CHESTPLATE") || n.contains("LEGGINGS") || n.contains("BOOTS")) {
-            return tier.toolPrice * 4.0;
+            return tier.toolPrice * 4L;
         }
         if (n.contains("SWORD") || n.contains("PICKAXE") || n.contains("AXE")
                 || n.contains("SHOVEL") || n.contains("HOE")) {
             return tier.toolPrice;
         }
         if (n.contains("BOW") || n.equals("CROSSBOW") || n.equals("TRIDENT") || n.equals("MACE")) {
-            return tier == ToolTier.WOOD ? 8.0 : tier.toolPrice;
+            return tier == ToolTier.WOOD ? 8L : tier.toolPrice;
+        }
+        if (n.equals("SHIELD") || n.equals("ARROW")) {
+            return 16L;
         }
         return null;
     }
@@ -233,86 +293,110 @@ public final class WorthCatalog {
     }
 
     private enum ToolTier {
-        WOOD(8.0),
-        STONE(16.0),
-        IRON(48.0),
-        GOLD(64.0),
-        DIAMOND(400.0),
-        NETHERITE(2000.0);
+        WOOD(8L),
+        STONE(16L),
+        IRON(64L),
+        GOLD(80L),
+        DIAMOND(500L),
+        NETHERITE(2400L);
 
-        final double toolPrice;
+        final long toolPrice;
 
-        ToolTier(double toolPrice) {
+        ToolTier(long toolPrice) {
             this.toolPrice = toolPrice;
         }
     }
 
-    private static final Map<String, Double> explicitPrices = buildExplicitPrices();
+    private static final Map<String, Long> explicitPrices = buildExplicitPrices();
 
-    private static Map<String, Double> buildExplicitPrices() {
-        Map<String, Double> map = new HashMap<>();
-        map.put("COAL", 6.0);
-        map.put("CHARCOAL", 5.0);
-        map.put("COPPER_INGOT", 4.0);
-        map.put("RAW_COPPER", 3.0);
-        map.put("IRON_INGOT", 12.0);
-        map.put("RAW_IRON", 8.0);
-        map.put("GOLD_INGOT", 24.0);
-        map.put("RAW_GOLD", 16.0);
-        map.put("REDSTONE", 8.0);
-        map.put("LAPIS_LAZULI", 10.0);
-        map.put("DIAMOND", 120.0);
-        map.put("EMERALD", 90.0);
-        map.put("ANCIENT_DEBRIS", 400.0);
-        map.put("NETHERITE_INGOT", 1500.0);
-        map.put("NETHERITE_SCRAP", 350.0);
-        map.put("ELYTRA", 5000.0);
-        map.put("DRAGON_EGG", 10000.0);
-        map.put("BEACON", 2500.0);
-        map.put("NETHER_STAR", 3000.0);
-        map.put("ENCHANTED_GOLDEN_APPLE", 1000.0);
-        map.put("TOTEM_OF_UNDYING", 750.0);
+    private static Map<String, Long> buildExplicitPrices() {
+        Map<String, Long> map = new HashMap<>();
+        map.put("COAL", 8L);
+        map.put("CHARCOAL", 6L);
+        map.put("COPPER_INGOT", 8L);
+        map.put("RAW_COPPER", 5L);
+        map.put("IRON_INGOT", 24L);
+        map.put("RAW_IRON", 14L);
+        map.put("GOLD_INGOT", 48L);
+        map.put("RAW_GOLD", 28L);
+        map.put("REDSTONE", 12L);
+        map.put("LAPIS_LAZULI", 14L);
+        map.put("DIAMOND", 220L);
+        map.put("EMERALD", 180L);
+        map.put("ANCIENT_DEBRIS", 550L);
+        map.put("NETHERITE_INGOT", 2200L);
+        map.put("NETHERITE_SCRAP", 500L);
+        map.put("ELYTRA", 8000L);
+        map.put("DRAGON_EGG", 15000L);
+        map.put("BEACON", 4000L);
+        map.put("NETHER_STAR", 5000L);
+        map.put("ENCHANTED_GOLDEN_APPLE", 1500L);
+        map.put("TOTEM_OF_UNDYING", 1200L);
+
+        map.put("COAL_ORE", 8L);
+        map.put("DEEPSLATE_COAL_ORE", 10L);
+        map.put("COPPER_ORE", 6L);
+        map.put("DEEPSLATE_COPPER_ORE", 8L);
+        map.put("IRON_ORE", 18L);
+        map.put("DEEPSLATE_IRON_ORE", 22L);
+        map.put("GOLD_ORE", 36L);
+        map.put("DEEPSLATE_GOLD_ORE", 44L);
+        map.put("NETHER_GOLD_ORE", 30L);
+        map.put("REDSTONE_ORE", 14L);
+        map.put("DEEPSLATE_REDSTONE_ORE", 18L);
+        map.put("LAPIS_ORE", 16L);
+        map.put("DEEPSLATE_LAPIS_ORE", 20L);
+        map.put("DIAMOND_ORE", 160L);
+        map.put("DEEPSLATE_DIAMOND_ORE", 200L);
+        map.put("EMERALD_ORE", 130L);
+        map.put("DEEPSLATE_EMERALD_ORE", 160L);
+        map.put("NETHER_QUARTZ_ORE", 12L);
+
         for (Material material : Material.values()) {
             String n = material.name();
-            if (n.endsWith("_ORE") || n.endsWith("_DEEPSLATE_ORE")) {
-                map.putIfAbsent(n, orePrice(n));
+            if ((n.endsWith("_ORE") || n.contains("DEEPSLATE") && n.contains("ORE"))
+                    && !map.containsKey(n)) {
+                map.putIfAbsent(n, orePriceFallback(n));
             }
         }
         return map;
     }
 
-    private static double orePrice(String oreName) {
+    private static long orePriceFallback(String oreName) {
         String upper = oreName.toUpperCase(Locale.ROOT);
         if (upper.contains("DIAMOND")) {
-            return 80.0;
+            return upper.contains("DEEPSLATE") ? 200L : 160L;
         }
         if (upper.contains("EMERALD")) {
-            return 60.0;
+            return upper.contains("DEEPSLATE") ? 160L : 130L;
         }
         if (upper.contains("ANCIENT_DEBRIS")) {
-            return 350.0;
+            return 550L;
+        }
+        if (upper.contains("NETHER_GOLD")) {
+            return 30L;
         }
         if (upper.contains("GOLD")) {
-            return 18.0;
+            return upper.contains("DEEPSLATE") ? 44L : 36L;
         }
         if (upper.contains("IRON")) {
-            return 10.0;
+            return upper.contains("DEEPSLATE") ? 22L : 18L;
         }
         if (upper.contains("COPPER")) {
-            return 3.0;
+            return upper.contains("DEEPSLATE") ? 8L : 6L;
         }
         if (upper.contains("COAL")) {
-            return 4.0;
+            return upper.contains("DEEPSLATE") ? 10L : 8L;
         }
         if (upper.contains("LAPIS")) {
-            return 8.0;
+            return upper.contains("DEEPSLATE") ? 20L : 16L;
         }
         if (upper.contains("REDSTONE")) {
-            return 6.0;
+            return upper.contains("DEEPSLATE") ? 18L : 14L;
         }
-        if (upper.contains("NETHER_QUARTZ") || upper.contains("QUARTZ")) {
-            return 6.0;
+        if (upper.contains("NETHER_QUARTZ") || upper.contains("QUARTZ_ORE")) {
+            return 12L;
         }
-        return 5.0;
+        return 8L;
     }
 }

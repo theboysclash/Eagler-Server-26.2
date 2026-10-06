@@ -111,7 +111,7 @@ Git ships **`.cmd` / `.bat`** launchers, not a binary. To get a `.exe`, wrap `la
 
 ### Hub and sell shop
 
-This repo includes **HubEconomy** (`plugins/hub-economy/`): a hub world, a **Survival** NPC warp, and a Donut-style **`/sell`** chest menu.
+This repo includes **HubEconomy** (`plugins/hub-economy/`): a hub world, a **Survival** NPC warp, a Donut-style **`/sell`** chest menu, whole-coin balances with a right-side **sidebar**, **`/shop`** instant buy, and **`/ah`** player auctions.
 
 Build and install the plugin (Java 25):
 
@@ -124,8 +124,10 @@ Windows: `launch\build-plugin.bat`
 | Command | What it does |
 |---------|----------------|
 | `/sell` | Open the sell chest — deposit items, click the emerald **Sell** button |
-| `/bal` or `/balance` | Show your money (`/bal <player>` for admins) |
-| `/worth` | Unit price of the item in your main hand (includes enchant bonus) |
+| `/bal` or `/balance` | Show your coin balance (`/bal <player>` for admins); the sidebar also shows coins |
+| `/worth` | Sell price in coins for the item in your main hand (includes enchant bonus). Dirt is **1 coin** |
+| `/shop` | Buy items from the server shop (buy price is higher than sell-back) |
+| `/ah` | Auction house — browse listings; `/ah sell <coins>` to list your hand; `/ah collect` to take your unsold listings back |
 | `/hub` | Return to the hub (adventure mode) |
 | `/survival` | Go to survival (same as right-clicking the NPC) |
 | `/sethub`, `/setsurvival` | Set spawn points (admin) |

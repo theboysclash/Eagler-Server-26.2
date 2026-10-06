@@ -23,6 +23,8 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
     private final EconomyStore economy;
     private final WorthCatalog worth;
     private final SellMenuService sellMenu;
+    private final ShopMenu shopMenu;
+    private final AuctionHouse auctionHouse;
 
     public HubEconomyCommands(
             HubEconomyPlugin plugin,
@@ -31,7 +33,9 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             HubNpc hubNpc,
             EconomyStore economy,
             WorthCatalog worth,
-            SellMenuService sellMenu) {
+            SellMenuService sellMenu,
+            ShopMenu shopMenu,
+            AuctionHouse auctionHouse) {
         this.plugin = plugin;
         this.config = config;
         this.worlds = worlds;
@@ -39,6 +43,8 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
         this.economy = economy;
         this.worth = worth;
         this.sellMenu = sellMenu;
+        this.shopMenu = shopMenu;
+        this.auctionHouse = auctionHouse;
     }
 
     @Override
@@ -54,6 +60,8 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             case "sethub" -> handleSetHub(sender);
             case "setsurvival" -> handleSetSurvival(sender);
             case "hubeconomy" -> handleAdmin(sender, args);
+            case "shop" -> handleShop(sender);
+            case "ah" -> handleAuction(sender, args);
             default -> false;
         };
     }
@@ -113,8 +121,56 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             player.sendMessage(Messages.error("Hold an item to check its worth."));
             return true;
         }
-        double unit = worth.stackUnitWorthWithEnchants(hand);
-        player.sendMessage(Messages.info(hand.getType().name() + ": " + MoneyFormat.format(unit) + " each"));
+        long unit = worth.stackUnitWorthWithEnchants(hand);
+        player.sendMessage(Messages.info(
+                hand.getType().name() + ": " + MoneyFormat.formatCoins(unit) + " each"));
+        return true;
+    }
+
+    private boolean handleShop(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Messages.error("Players only."));
+            return true;
+        }
+        if (!player.hasPermission("hubeconomy.use")) {
+            player.sendMessage(Messages.error("No permission."));
+            return true;
+        }
+        shopMenu.open(player);
+        return true;
+    }
+
+    private boolean handleAuction(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Messages.error("Players only."));
+            return true;
+        }
+        if (!player.hasPermission("hubeconomy.use")) {
+            player.sendMessage(Messages.error("No permission."));
+            return true;
+        }
+        if (args.length == 0) {
+            auctionHouse.openBrowser(player);
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("sell")) {
+            if (args.length < 2) {
+                player.sendMessage(Messages.error("Usage: /ah sell <coins>"));
+                return true;
+            }
+            try {
+                long price = Long.parseLong(args[1]);
+                auctionHouse.sellFromHand(player, price);
+            } catch (NumberFormatException e) {
+                player.sendMessage(Messages.error("Invalid price."));
+            }
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("collect")) {
+            auctionHouse.collectExpired(player);
+            return true;
+        }
+        player.sendMessage(Messages.info("Usage: /ah | /ah sell <coins> | /ah collect"));
         return true;
     }
 
