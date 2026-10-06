@@ -105,6 +105,30 @@ Browsers often require **`wss://`** (secure WebSocket) for online-hosted Eagler 
 
 Git ships **`.cmd` / `.bat`** launchers, not a binary. To get a `.exe`, wrap `launch/start-server.cmd` with a bat-to-exe tool on your PC (see [PLAN-26.2.md](PLAN-26.2.md)).
 
+### Hub and sell shop
+
+This repo includes **HubEconomy** (`plugins/hub-economy/`): a hub world, a **Survival** NPC warp, and a Donut-style **`/sell`** chest menu.
+
+Build and install the plugin (Java 25):
+
+```bash
+./launch/build-plugin.sh
+```
+
+Windows: `launch\build-plugin.bat`
+
+| Command | What it does |
+|---------|----------------|
+| `/sell` | Open the sell chest — deposit items, click the emerald **Sell** button |
+| `/bal` or `/balance` | Show your money (`/bal <player>` for admins) |
+| `/worth` | Unit price of the item in your main hand (includes enchant bonus) |
+| `/hub` | Return to the hub (adventure mode) |
+| `/survival` | Go to survival (same as right-clicking the NPC) |
+| `/sethub`, `/setsurvival` | Set spawn points (admin) |
+| `/hubeconomy reload` | Reload prices and config (admin) |
+
+Right-click the green **Survival** villager at hub spawn to enter survival.
+
 ---
 
 ## Creating a 1.12.2 Server

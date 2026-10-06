@@ -125,6 +125,11 @@ def main() -> int:
     ensure_eula()
     ensure_server_properties(port)
 
+    hub_jar = REPO_ROOT / "plugins" / "hub-economy" / "build" / "libs" / "HubEconomy.jar"
+    if hub_jar.is_file():
+        shutil.copy2(hub_jar, PLUGINS_DIR / "HubEconomy.jar")
+        print(f"  copied {hub_jar.name} to {PLUGINS_DIR}")
+
     print()
     print("Setup complete.")
     print(f"  Server files: {SERVER_DIR}")
