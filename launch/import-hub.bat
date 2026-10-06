@@ -1,6 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0.."
+set "NOPAUSE=0"
+if /i "%~1"=="/nopause" set "NOPAUSE=1"
 set "SRC=%CD%\import-worlds\hub"
 set "DEST=%CD%\server-26.2\hub"
 
@@ -19,4 +21,4 @@ if exist "%DEST%" rmdir /s /q "%DEST%"
 mkdir "%DEST%"
 xcopy /e /i /y "%SRC%\*" "%DEST%\"
 echo Done. Restart the server. Run /sethub at your spawn once.
-pause
+if "%NOPAUSE%"=="0" pause

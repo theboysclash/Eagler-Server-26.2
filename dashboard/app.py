@@ -1088,6 +1088,11 @@ def main() -> int:
             if open_browser:
                 webbrowser.open(f"http://{HOST}:{port}")
                 print(f"Dashboard already running at http://{HOST}:{port}")
+                print("Close the other dashboard command window, or use that tab in your browser.")
+                try:
+                    input("Press Enter to close this launcher window...")
+                except EOFError:
+                    pass
                 return 0
             port += 1
     print("Could not bind a dashboard port.", file=sys.stderr)
