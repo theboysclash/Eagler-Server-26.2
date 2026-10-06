@@ -73,6 +73,8 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
 
 5. Java Edition on the same PC: **`127.0.0.1:25565`**
 
+The server list name is **KyleTurski MC**. The join address stays a host plus port **25565** (`127.0.0.1:25565` on the same PC). A port cannot be a name.
+
 The first start may take a few minutes while Paper generates the world. Leave the window open while the server is running.
 
 ### Quick start (Linux / macOS)

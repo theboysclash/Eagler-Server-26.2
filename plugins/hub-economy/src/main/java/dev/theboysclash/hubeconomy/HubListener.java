@@ -31,7 +31,7 @@ public final class HubListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             worlds.sendToHub(event.getPlayer());
-            event.getPlayer().sendMessage(Messages.info("Welcome to the hub. Right-click Survival to play."));
+            event.getPlayer().sendMessage(Messages.info("Welcome to KyleTurski MC. Right-click Survival to play."));
         });
     }
 

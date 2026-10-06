@@ -63,10 +63,23 @@ def download(url: str, dest: Path, expected_sha256: str | None) -> None:
 
 def ensure_server_properties(port: int) -> None:
     dest = SERVER_DIR / "server.properties"
-    if dest.exists():
-        return
     template = (TEMPLATES / "server.properties").read_text(encoding="utf-8")
-    dest.write_text(template.replace("server-port=25565", f"server-port={port}"), encoding="utf-8")
+    template = template.replace("server-port=25565", f"server-port={port}")
+    if not dest.exists():
+        dest.write_text(template, encoding="utf-8")
+        return
+    text = dest.read_text(encoding="utf-8")
+    if "motd=" in text:
+        lines = []
+        for line in text.splitlines(keepends=True):
+            if line.startswith("motd="):
+                newline = "\n" if line.endswith("\n") else ""
+                lines.append("motd=KyleTurski MC" + newline)
+            else:
+                lines.append(line)
+        dest.write_text("".join(lines), encoding="utf-8")
+    else:
+        dest.write_text(text.rstrip() + "\nmotd=KyleTurski MC\n", encoding="utf-8")
 
 
 def ensure_eula() -> None:
@@ -140,6 +153,7 @@ def main() -> int:
     else:
         print("  ./launch/start-server.sh")
     print()
+    print("Server list name: KyleTurski MC")
     print("Eaglercraft 26.2 (offline HTML): Direct Connect →")
     print(f"  ws://127.0.0.1:{port}/")
     print("Java Edition 26.2 on the same PC:")
