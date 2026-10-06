@@ -137,6 +137,27 @@ Windows: `launch\build-plugin.bat`
 
 Right-click the green **Survival** villager at hub spawn to enter survival.
 
+### Eagler QOL plugins (lax1dude)
+
+Browser WebSocket support is already handled by **[EaglerXPaper](https://github.com/PlanetDogeCodes/EaglerXPaper)** (installed by `setup.py`). That replaces **`EaglerXServer.jar`** from [lax1dude’s releases](https://github.com/lax1dude/eaglerxserver/releases) — **do not** drop `EaglerXServer.jar` into `plugins/` on this 26.2 server.
+
+Optional **add-ons** from the same release (MOTD, HTTP file hosting, etc.) work with the EaglerX API:
+
+| Install from dashboard | Manual |
+|------------------------|--------|
+| **Plugins → Eagler add-ons → Install** | Download jars from [releases v1.1.1](https://github.com/lax1dude/eaglerxserver/releases/tag/v1.1.1) into `server-26.2\plugins\` |
+
+| Jar | Use on KyleTurski MC |
+|-----|----------------------|
+| **EaglerMOTD** | Custom MOTD for Eagler clients |
+| **EaglerWeb** | Host small files over HTTP |
+| **EaglerXRewind** | Only if you need **1.5.2** Eagler clients (not 26.2) |
+| **EaglerXPlan** | Only if you also install **Plan** from Modrinth |
+| **EaglerXBackendRPC** | Only for Bungee/Velocity proxy networks |
+| **EaglerXSupervisor** | Separate multi-proxy daemon — not a Paper plugin |
+
+Restart the server after installing any jar. Config appears under `server-26.2/plugins/EaglercraftXServer/` (same paths as upstream EaglerXServer).
+
 **Custom hub map (too big for GitHub):** copy world files into `import-worlds/hub/` (see that folder’s README), run `launch\import-hub.bat`, restart, then **`/sethub`** once at spawn. Worlds live under `server-26.2/` on your PC only.
 
 ### Troubleshooting

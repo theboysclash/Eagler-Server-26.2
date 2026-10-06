@@ -303,10 +303,11 @@ async function paintPlugins() {
   main.innerHTML = `
     <div class="row"><h1>Plugin Manager</h1><span class="meta">Your server version: MC 26.2</span></div>
     <div class="tabs">
-      <button class="tab ${state.pluginTab === "browse" ? "active" : ""}" data-tab="browse">Browse Plugins</button>
+      <button class="tab ${state.pluginTab === "browse" ? "active" : ""}" data-tab="browse">Modrinth</button>
+      <button class="tab ${state.pluginTab === "eagler" ? "active" : ""}" data-tab="eagler">Eagler add-ons</button>
       <button class="tab ${state.pluginTab === "installed" ? "active" : ""}" id="installed-tab" data-tab="installed">Installed</button>
     </div>
-    <div class="toolbar">
+    <div class="toolbar" id="plugin-toolbar">
       <input id="plugin-search" placeholder="Search plugins on Modrinth" style="flex:1">
       <button class="btn" id="plugin-go">Search</button>
     </div>
@@ -317,12 +318,57 @@ async function paintPlugins() {
       paintPlugins();
     };
   });
-  document.getElementById("plugin-go").onclick = () => loadModrinth(document.getElementById("plugin-search").value);
-  document.getElementById("plugin-search").onkeydown = (event) => {
-    if (event.key === "Enter") loadModrinth(event.target.value);
-  };
-  if (state.pluginTab === "installed") loadInstalled();
-  else loadModrinth("");
+  const toolbar = document.getElementById("plugin-toolbar");
+  if (state.pluginTab === "eagler") {
+    toolbar.hidden = true;
+    loadEaglerAddons();
+  } else if (state.pluginTab === "installed") {
+    toolbar.hidden = true;
+    loadInstalled();
+  } else {
+    toolbar.hidden = false;
+    document.getElementById("plugin-go").onclick = () => loadModrinth(document.getElementById("plugin-search").value);
+    document.getElementById("plugin-search").onkeydown = (event) => {
+      if (event.key === "Enter") loadModrinth(event.target.value);
+    };
+    loadModrinth("");
+  }
+}
+
+async function loadEaglerAddons() {
+  const body = document.getElementById("plugin-body");
+  body.className = "grid";
+  body.innerHTML = '<div class="empty">Loading Eagler add-ons…</div>';
+  try {
+    const data = await api("/api/eaglerx/addons");
+    const note = data.note
+      ? `<p class="meta">${esc(data.note)} <a href="${esc(data.sourceUrl || "https://github.com/lax1dude/eaglerxserver/releases")}" target="_blank" rel="noopener">lax1dude releases</a> (${esc(data.release || "")}).</p>`
+      : "";
+    body.innerHTML = note + (data.addons || []).map((addon) => `
+      <article class="card plugin-card">
+        <div><strong>${esc(addon.title || addon.fileName)}</strong></div>
+        <div class="desc">${esc(addon.description || "")}</div>
+        <button class="btn primary" data-eagler="${esc(addon.id)}">Install</button>
+      </article>`).join("");
+    body.querySelectorAll("[data-eagler]").forEach((button) => {
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          const result = await api("/api/eaglerx/install", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: button.dataset.eagler }),
+          });
+          showToast("Installed " + (result.name || "add-on") + ". Restart the server.");
+        } catch (error) {
+          showToast(error.message);
+          button.disabled = false;
+        }
+      };
+    });
+  } catch (error) {
+    body.innerHTML = '<div class="empty">' + esc(error.message) + "</div>";
+  }
 }
 
 async function loadInstalled() {

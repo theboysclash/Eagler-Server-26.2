@@ -39,6 +39,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 DATA_DIR = Path(__file__).resolve().parent / "data"
 SETTINGS_PATH = DATA_DIR / "settings.json"
 MANIFEST_PATH = ROOT / "launch" / "manifest.json"
+EAGLERX_ADDONS_PATH = ROOT / "launch" / "eaglerx-addons.json"
 BACKUPS_DIR = SERVER_DIR / "backups"
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -483,6 +484,48 @@ def install_modrinth(project_id: str, version_id: str | None) -> dict:
     return {"name": destination.name, "version": chosen.get("version_number", "")}
 
 
+def load_eaglerx_addons() -> dict:
+    if not EAGLERX_ADDONS_PATH.is_file():
+        return {"release": "", "sourceUrl": "", "note": "", "addons": []}
+    data = json.loads(EAGLERX_ADDONS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("Invalid eaglerx-addons.json")
+    addons = data.get("addons") or []
+    if not isinstance(addons, list):
+        raise ValueError("Invalid eaglerx-addons.json addons list")
+    return data
+
+
+def install_eaglerx_addon(addon_id: str) -> dict:
+    if not re.fullmatch(r"[a-z0-9-]+", addon_id):
+        raise ValueError("Invalid add-on id")
+    catalog = load_eaglerx_addons()
+    entry = next((item for item in catalog.get("addons", []) if item.get("id") == addon_id), None)
+    if not entry:
+        raise ValueError("Unknown Eagler add-on")
+    filename = str(entry.get("fileName", ""))
+    url = str(entry.get("url", ""))
+    if not filename.endswith(".jar"):
+        raise ValueError("Invalid add-on file name")
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc != "github.com":
+        raise ValueError("Refusing add-on download outside GitHub releases")
+    if not parsed.path.startswith("/lax1dude/eaglerxserver/releases/download/"):
+        raise ValueError("Refusing non-EaglerXServer release URL")
+    destination = plugin_path(filename, True)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(url, headers={"User-Agent": MODRINTH_UA})
+    with urllib.request.urlopen(request, timeout=120) as response:
+        data = response.read()
+    if len(data) > 80 * 1024 * 1024:
+        raise ValueError("Add-on file is too large.")
+    destination.write_bytes(data)
+    disabled = destination.with_name(destination.name + ".disabled")
+    if disabled.exists():
+        disabled.unlink()
+    return {"name": destination.name, "title": entry.get("title", filename)}
+
+
 def create_backup() -> str:
     world = SERVER_DIR / "world"
     if not world.is_dir():
@@ -558,6 +601,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/modrinth/search":
                 self._modrinth_search(query)
                 return
+            if path == "/api/eaglerx/addons":
+                self._send(200, load_eaglerx_addons())
+                return
             if path == "/api/files":
                 self._list_files(query.get("path", [""])[0])
                 return
@@ -617,6 +663,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/modrinth/install":
                 version = data.get("versionId")
                 result = install_modrinth(str(data.get("projectId", "")), str(version) if version else None)
+                self._send(200, result)
+                return
+            if path == "/api/eaglerx/install":
+                result = install_eaglerx_addon(str(data.get("id", "")))
                 self._send(200, result)
                 return
             if path == "/api/files/write":
