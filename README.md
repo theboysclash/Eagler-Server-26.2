@@ -58,7 +58,7 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
 
 ### Quick start (CMD / batch on Windows)
 
-**Easiest:** double-click **`KyleTurski-MC.bat`** in the repo folder (setup, HubEconomy build, dashboard — one file).
+**Easiest:** open the **project folder** (must contain a `launch` folder), then double-click **`KyleTurski-MC.bat`**. Read **`START-HERE.txt`** if you are unsure. Do **not** use `C:\path\to\...` — that was only an example path. No Git? **Code → Download ZIP** on GitHub, extract, run the bat inside. Lost the folder? Run **`FIND-SERVER-FOLDER.bat`**.
 
 Or step by step:
 

@@ -1,0 +1,43 @@
+KyleTurski MC - Windows quick start
+====================================
+
+You are in the RIGHT place if this file is next to KyleTurski-MC.bat
+and you see a "launch" folder in the same directory.
+
+STEP 1 - Get the project on your PC (pick one)
+
+  A) No Git: open in browser
+     https://github.com/theboysclash/Eagler-Server-26.2
+     Click green "Code" -> Download ZIP
+     Right-click the ZIP -> Extract All
+     Open the extracted folder (often named Eagler-Server-26.2-main)
+
+  B) With Git:
+     git clone https://github.com/theboysclash/Eagler-Server-26.2.git
+     cd Eagler-Server-26.2
+
+STEP 2 - Run the server
+
+  Double-click:  KyleTurski-MC.bat
+  (in the project folder - NOT from C:\Users\YourName unless you cloned there)
+
+STEP 3 - Install once on your PC
+
+  - Python 3 from https://www.python.org/downloads/
+    (check "Add python.exe to PATH" during install)
+  - Java 25 from https://adoptium.net/temurin/releases/?version=25
+
+STEP 4 - Browser
+
+  Dashboard opens at http://127.0.0.1:8765
+  Click Start to run Minecraft.
+
+Lost the folder?
+
+  Double-click FIND-SERVER-FOLDER.bat (in this ZIP) to search your PC.
+
+Wrong command prompt?
+
+  Do not type C:\path\to\... - that was an example.
+  Use your real folder, for example:
+    cd /d "C:\Users\evanb\Downloads\Eagler-Server-26.2-main"

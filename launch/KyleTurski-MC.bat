@@ -1,4 +1,9 @@
 @echo off
+if /i not "%~1"=="--inner" (
+  title KyleTurski MC
+  cmd /k call "%~f0" --inner
+  exit /b 0
+)
 title KyleTurski MC - setup and dashboard
 cd /d "%~dp0.."
 
