@@ -525,11 +525,38 @@ async function paintNetwork() {
     <section class="card">
       <p>Java on this PC: <strong>${data.localJava}</strong></p>
       <p>Eaglercraft on this PC: <strong>${data.localEagler}</strong></p>
-      <p>Public Eaglercraft address: <strong>${data.publicEagler}</strong></p>
+      <p>Free public Eagler address: <strong>${esc(data.tunnel && data.tunnel.eaglerUrl ? data.tunnel.eaglerUrl : "not started")}</strong></p>
+      <p class="meta">Click the button, wait about 20 seconds, then paste that wss:// address into Eaglercraft Direct Connect. It changes every time you start it. Java players on this PC still use ${esc(data.localJava)}.</p>
+      <div class="toolbar">
+        <button class="btn primary" id="public-start">Start free public address</button>
+        <button class="btn" id="public-stop">Stop public address</button>
+      </div>
       <p class="meta">LAN addresses: ${data.lan.length ? data.lan.join(", ") : "none detected"}</p>
-      <p class="meta">The public wss address still needs DNS and launch/start-wss.</p>
       ${data.clientTips && data.clientTips.length ? `<ul>${data.clientTips.map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>` : ""}
     </section>`;
+  document.getElementById("public-start").onclick = async () => {
+    showToast("Starting free public address…");
+    try {
+      const result = await api("/api/public", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start" }),
+      });
+      showToast(result.eaglerUrl || "Public address ready");
+      paintNetwork();
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+  document.getElementById("public-stop").onclick = async () => {
+    await api("/api/public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "stop" }),
+    });
+    showToast("Public address stopped");
+    paintNetwork();
+  };
 }
 
 async function paintProperties() {

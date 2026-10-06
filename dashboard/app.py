@@ -208,8 +208,120 @@ def modrinth_get(path: str) -> object:
         return json.loads(response.read().decode("utf-8"))
 
 
+class PublicTunnel:
+    """Cloudflare quick tunnel: free https URL, no domain signup."""
+
+    def __init__(self) -> None:
+        self.proc: subprocess.Popen | None = None
+        self.https_url = ""
+        self.error = ""
+        self.lines: list[str] = []
+
+    def running(self) -> bool:
+        return self.proc is not None and self.proc.poll() is None
+
+    def eagler_url(self) -> str:
+        if self.https_url.startswith("https://"):
+            return "wss://" + self.https_url[len("https://"):]
+        return ""
+
+    def binary_path(self) -> Path:
+        name = "cloudflared.exe" if os.name == "nt" else "cloudflared"
+        return SERVER_DIR / name
+
+    def ensure_binary(self) -> Path:
+        dest = self.binary_path()
+        if dest.is_file() and dest.stat().st_size > 1_000_000:
+            return dest
+        url = (
+            "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+            if os.name == "nt"
+            else "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+        )
+        if runtime is not None:
+            runtime.append("Downloading free public tunnel (cloudflared)...")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        request = urllib.request.Request(url, headers={"User-Agent": MODRINTH_UA})
+        with urllib.request.urlopen(request, timeout=180) as response:
+            dest.write_bytes(response.read())
+        if os.name != "nt":
+            dest.chmod(0o755)
+        return dest
+
+    def start(self, port: int) -> str | None:
+        if self.running() and self.eagler_url():
+            return None
+        self.stop()
+        try:
+            binary = self.ensure_binary()
+        except Exception as exc:  # noqa: BLE001
+            self.error = f"Could not download cloudflared: {exc}"
+            return self.error
+        self.https_url = ""
+        self.error = ""
+        self.lines.clear()
+        self.proc = subprocess.Popen(
+            [str(binary), "tunnel", "--url", f"http://127.0.0.1:{port}", "--no-autoupdate"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        threading.Thread(target=self._read, daemon=True).start()
+        for _ in range(50):
+            if self.eagler_url():
+                if runtime is not None:
+                    runtime.append("Public Eagler address: " + self.eagler_url())
+                return None
+            if self.proc.poll() is not None:
+                tail = " ".join(self.lines[-4:])
+                self.error = "Public tunnel stopped. " + tail
+                return self.error
+            time.sleep(0.5)
+        self.error = "Timed out waiting for a public address."
+        return self.error
+
+    def stop(self) -> None:
+        proc = self.proc
+        self.proc = None
+        self.https_url = ""
+        if proc is not None and proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+    def status(self) -> dict:
+        return {
+            "running": self.running(),
+            "eaglerUrl": self.eagler_url(),
+            "httpsUrl": self.https_url,
+            "error": self.error,
+        }
+
+    def _read(self) -> None:
+        proc = self.proc
+        if proc is None or proc.stdout is None:
+            return
+        for line in proc.stdout:
+            text = line.rstrip()
+            self.lines.append(text)
+            self.lines = self.lines[-40:]
+            match = re.search(r"https://[A-Za-z0-9-]+\.trycloudflare\.com", text)
+            if match:
+                self.https_url = match.group(0)
+            if runtime is not None and ("trycloudflare" in text or "ERR" in text):
+                runtime.append(text)
+
+
+public_tunnel = PublicTunnel()
+
+
 def kill_related_server_processes(runtime: "MinecraftRuntime") -> list[str]:
-    """End Paper, Caddy, and other KyleTurski MC processes (not this dashboard)."""
+    """End Paper, Caddy, the free public tunnel, and other server processes (not this dashboard)."""
+    public_tunnel.stop()
     runtime.force_stop()
     killed: list[str] = []
     my_pid = os.getpid()
@@ -231,6 +343,7 @@ def kill_related_server_processes(runtime: "MinecraftRuntime") -> list[str]:
             "  $name = $_.Name; "
             "  if ($cmd -like ('*' + $marker + '*')) { $hit = $true; $name = 'Minecraft' } "
             "  elseif (($cmd -like '*caddy*') -and ($cmd -like '*Caddyfile*')) { $hit = $true; $name = 'Caddy' } "
+            "  elseif ($cmd -like '*cloudflared*') { $hit = $true; $name = 'Public tunnel' } "
             "  elseif (($cmd -like '*paper.jar*') -and ($cmd -like ('*' + $server + '*'))) { $hit = $true; $name = 'Minecraft' }; "
             "  if ($hit) { "
             "    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue; "
@@ -264,6 +377,8 @@ def kill_related_server_processes(runtime: "MinecraftRuntime") -> list[str]:
             label = f"Minecraft (pid {pid})"
         elif "caddy" in cmdline and "Caddyfile" in cmdline:
             label = f"Caddy (pid {pid})"
+        elif "cloudflared" in cmdline:
+            label = f"Public tunnel (pid {pid})"
         elif "paper.jar" in cmdline and server_path in cmdline:
             label = f"Minecraft (pid {pid})"
         if not label:
@@ -284,7 +399,7 @@ def kill_related_server_processes(runtime: "MinecraftRuntime") -> list[str]:
             cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode("utf-8", errors="replace")
         except OSError:
             continue
-        if marker not in cmdline and not (
+        if marker not in cmdline and "cloudflared" not in cmdline and not (
             "caddy" in cmdline and "Caddyfile" in cmdline
         ) and not ("paper.jar" in cmdline and server_path in cmdline):
             continue
@@ -732,6 +847,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/network":
                 self._network()
                 return
+            if path == "/api/public":
+                self._send(200, public_tunnel.status())
+                return
             if path == "/api/settings":
                 self._send(200, load_settings())
                 return
@@ -762,6 +880,9 @@ class Handler(BaseHTTPRequestHandler):
             path = parsed.path
             if path == "/api/power":
                 self._power(str(data.get("action", "")))
+                return
+            if path == "/api/public":
+                self._public(str(data.get("action", "")))
                 return
             if path == "/api/command":
                 error = runtime.send(str(data.get("command", "")))
@@ -1018,10 +1139,30 @@ class Handler(BaseHTTPRequestHandler):
             "port": int(props.get("server-port", "25565") or 25565),
             "localJava": f"127.0.0.1:{props.get('server-port', '25565')}",
             "localEagler": f"ws://127.0.0.1:{props.get('server-port', '25565')}/",
-            "publicEagler": public.get("url", "wss://KyleTurski.MC"),
+            "publicEagler": public_tunnel.eagler_url() or public.get("url", ""),
+            "tunnel": public_tunnel.status(),
             "lan": addresses,
             "clientTips": load_performance_module().load_preset().get("client_tips", []),
         })
+
+    def _public(self, action: str) -> None:
+        if action == "stop":
+            public_tunnel.stop()
+            self._send(200, public_tunnel.status())
+            return
+        if action != "start":
+            self._error(400, "Unknown action")
+            return
+        props = read_properties()
+        try:
+            port = int(props.get("server-port", "25565") or 25565)
+        except ValueError:
+            port = 25565
+        error = public_tunnel.start(port)
+        if error:
+            self._error(400, error)
+            return
+        self._send(200, public_tunnel.status())
 
     def _list_backups(self) -> None:
         BACKUPS_DIR.mkdir(parents=True, exist_ok=True)

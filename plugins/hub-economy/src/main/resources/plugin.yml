@@ -37,6 +37,9 @@ commands:
   ah:
     description: Auction house
     usage: /ah [sell <coins>|collect]
+  login:
+    description: Register or log in with a password
+    usage: /login <password> [password]
 permissions:
   hubeconomy.use:
     description: Use hub economy player commands

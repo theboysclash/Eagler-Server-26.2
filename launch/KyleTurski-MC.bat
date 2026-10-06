@@ -43,17 +43,12 @@ if errorlevel 1 (
   goto :fail
 )
 
-if not exist "server-26.2\plugins\HubEconomy.jar" (
-  echo.
-  echo [2/4] Building HubEconomy - first time can take a few minutes...
-  call "%~dp0build-plugin.bat"
-  if errorlevel 1 (
-    echo HubEconomy build failed>>"%LOG%"
-    goto :fail
-  )
-) else (
-  echo.
-  echo [2/4] HubEconomy already built.
+echo.
+echo [2/4] Building HubEconomy (login, shop, hub)...
+call "%~dp0build-plugin.bat"
+if errorlevel 1 (
+  echo HubEconomy build failed>>"%LOG%"
+  goto :fail
 )
 
 echo.

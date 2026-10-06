@@ -14,6 +14,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
     private CoinSidebar coinSidebar;
     private ShopMenu shopMenu;
     private AuctionHouse auctionHouse;
+    private PasswordGate passwordGate;
 
     @Override
     public void onEnable() {
@@ -41,6 +42,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
 
         sellMenuService = new SellMenuService(this, economyStore, worthCatalog);
         shopMenu = new ShopMenu(this, economyStore, worthCatalog);
+        passwordGate = new PasswordGate(this);
 
         HubEconomyCommands commands = new HubEconomyCommands(
                 this, pluginConfig, worldService, hubNpc, economyStore, worthCatalog,
@@ -56,9 +58,14 @@ public final class HubEconomyPlugin extends JavaPlugin {
         register("hubeconomy", commands);
         register("shop", commands);
         register("ah", commands);
+        PluginCommand login = getCommand("login");
+        if (login != null) {
+            login.setExecutor(passwordGate);
+        }
 
         getServer().getPluginManager().registerEvents(
-                new HubListener(this, pluginConfig, worldService, hubNpc, coinSidebar), this);
+                new HubListener(this, pluginConfig, worldService, hubNpc, coinSidebar, passwordGate), this);
+        getServer().getPluginManager().registerEvents(new AuthListener(passwordGate), this);
         getServer().getPluginManager().registerEvents(sellMenuService, this);
         getServer().getPluginManager().registerEvents(shopMenu, this);
         getServer().getPluginManager().registerEvents(auctionHouse, this);

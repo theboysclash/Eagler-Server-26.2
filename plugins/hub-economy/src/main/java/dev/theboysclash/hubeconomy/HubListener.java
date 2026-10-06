@@ -21,18 +21,21 @@ public final class HubListener implements Listener {
     private final WorldService worlds;
     private final HubNpc hubNpc;
     private final CoinSidebar coinSidebar;
+    private final PasswordGate passwordGate;
 
     public HubListener(
             HubEconomyPlugin plugin,
             PluginConfig config,
             WorldService worlds,
             HubNpc hubNpc,
-            CoinSidebar coinSidebar) {
+            CoinSidebar coinSidebar,
+            PasswordGate passwordGate) {
         this.plugin = plugin;
         this.config = config;
         this.worlds = worlds;
         this.hubNpc = hubNpc;
         this.coinSidebar = coinSidebar;
+        this.passwordGate = passwordGate;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -40,7 +43,7 @@ public final class HubListener implements Listener {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             worlds.sendToHub(event.getPlayer());
             coinSidebar.attach(event.getPlayer());
-            event.getPlayer().sendMessage(Messages.info("Welcome to KyleTurski MC. Right-click Survival to play."));
+            event.getPlayer().sendMessage(passwordGate.prompt(event.getPlayer()));
         });
     }
 
@@ -63,7 +66,7 @@ public final class HubListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInteractEntity(PlayerInteractEntityEvent event) {
         if (hubNpc.isSurvivalNpc(event.getRightClicked())) {
             event.setCancelled(true);
