@@ -1,0 +1,40 @@
+name: HubEconomy
+main: dev.theboysclash.hubeconomy.HubEconomyPlugin
+version: '1.0.0'
+api-version: '26.2'
+description: Hub, survival warp, and sell economy
+commands:
+  sell:
+    description: Open the sell chest menu
+    usage: /sell
+  bal:
+    description: Show your balance
+    usage: /bal [player]
+  balance:
+    description: Show your balance
+    usage: /balance [player]
+  worth:
+    description: Show worth of item in hand
+    usage: /worth
+  hub:
+    description: Teleport to the hub
+    usage: /hub
+  survival:
+    description: Teleport to survival
+    usage: /survival
+  sethub:
+    description: Set hub spawn (admin)
+    usage: /sethub
+  setsurvival:
+    description: Set survival spawn (admin)
+    usage: /setsurvival
+  hubeconomy:
+    description: HubEconomy admin commands
+    usage: /hubeconomy reload
+permissions:
+  hubeconomy.use:
+    description: Use hub economy player commands
+    default: true
+  hubeconomy.admin:
+    description: Admin commands for hub economy
+    default: op

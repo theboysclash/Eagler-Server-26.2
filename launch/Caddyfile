@@ -1,0 +1,9 @@
+# Players join Eaglercraft at wss://KyleTurski.MC
+# DNS for kyleturski.mc must point at this computer.
+# Ports 80 and 443 must be open. The game stays on 127.0.0.1:25565.
+kyleturski.mc {
+	reverse_proxy 127.0.0.1:25565 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto https
+	}
+}

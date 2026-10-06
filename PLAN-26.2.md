@@ -45,8 +45,8 @@ Community **26.2 WASM** builds are still experimental. Most should work with **E
 3. Start server:
    - **Windows:** double-click `launch/start-server.cmd` or run `launch\start-server.bat`
    - **Linux/macOS:** `./launch/start-server.sh`
-4. In Eaglercraft 26.2: **Multiplayer → Direct Connect** → `ws://127.0.0.1:25565/`
-5. For online play: port-forward **25565** or run `launch/tunnel-ngrok.bat` and use the printed `wss://…` URL (online hosted clients often require HTTPS/WSS).
+4. In Eaglercraft 26.2: **Multiplayer → Direct Connect** → `wss://KyleTurski.MC` (after DNS and `launch/start-wss.sh`). Same PC before DNS: `ws://127.0.0.1:25565/`.
+5. Java Edition uses `127.0.0.1:25565` on the same PC. `wss://` is the browser address.
 
 ## Turning `.bat` into a `.exe` (optional)
 

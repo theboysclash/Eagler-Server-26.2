@@ -63,10 +63,23 @@ def download(url: str, dest: Path, expected_sha256: str | None) -> None:
 
 def ensure_server_properties(port: int) -> None:
     dest = SERVER_DIR / "server.properties"
-    if dest.exists():
-        return
     template = (TEMPLATES / "server.properties").read_text(encoding="utf-8")
-    dest.write_text(template.replace("server-port=25565", f"server-port={port}"), encoding="utf-8")
+    template = template.replace("server-port=25565", f"server-port={port}")
+    if not dest.exists():
+        dest.write_text(template, encoding="utf-8")
+        return
+    text = dest.read_text(encoding="utf-8")
+    if "motd=" in text:
+        lines = []
+        for line in text.splitlines(keepends=True):
+            if line.startswith("motd="):
+                newline = "\n" if line.endswith("\n") else ""
+                lines.append("motd=KyleTurski MC" + newline)
+            else:
+                lines.append(line)
+        dest.write_text("".join(lines), encoding="utf-8")
+    else:
+        dest.write_text(text.rstrip() + "\nmotd=KyleTurski MC\n", encoding="utf-8")
 
 
 def ensure_eula() -> None:
@@ -125,6 +138,11 @@ def main() -> int:
     ensure_eula()
     ensure_server_properties(port)
 
+    hub_jar = REPO_ROOT / "plugins" / "hub-economy" / "build" / "libs" / "HubEconomy.jar"
+    if hub_jar.is_file():
+        shutil.copy2(hub_jar, PLUGINS_DIR / "HubEconomy.jar")
+        print(f"  copied {hub_jar.name} to {PLUGINS_DIR}")
+
     print()
     print("Setup complete.")
     print(f"  Server files: {SERVER_DIR}")
@@ -135,13 +153,17 @@ def main() -> int:
     else:
         print("  ./launch/start-server.sh")
     print()
-    print("Eaglercraft 26.2 (offline HTML): Direct Connect →")
+    join_url = manifest.get("publicJoin", {}).get("url", "wss://KyleTurski.MC")
+    print("Server list name: KyleTurski MC")
+    print("Eaglercraft 26.2 Direct Connect →")
+    print(f"  {join_url}")
+    print("Same computer, before DNS is set up:")
     print(f"  ws://127.0.0.1:{port}/")
-    print("Java Edition 26.2 on the same PC:")
+    print("Java Edition 26.2:")
     print(f"  127.0.0.1:{port}")
     print()
-    print("For friends on the internet, expose port 25565 or use ngrok / Cloudflare Tunnel")
-    print("(see README — Creating a 26.2 Server).")
+    print("For wss://KyleTurski.MC, start launch/start-wss.sh (or start-wss.bat)")
+    print("after the Minecraft server is running. Point that domain at this machine.")
     return 0
 
 

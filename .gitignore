@@ -2,6 +2,10 @@
 server-26.2/
 *.log
 
+# HubEconomy plugin build
+plugins/hub-economy/build/
+plugins/hub-economy/.gradle/
+
 # OS / editor
 .DS_Store
 Thumbs.db
