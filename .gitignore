@@ -1,0 +1,7 @@
+# Generated Paper server (downloaded by launch/setup.py)
+server-26.2/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db

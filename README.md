@@ -1,7 +1,12 @@
 # How to make an Eaglercraft server:<br> A Comprehensive tutorial
-So you want to make an [Eaglercraft](https://eaglercraft.com/) server? That's great. I'm here to help!<br>
+
+So you want to make an [Eaglercraft](https://eaglercraft.com/) server? That's great. I'm here to help!
+
+> **New: Minecraft / Eaglercraft 26.2** — this repo includes a **one-command setup** and **Windows CMD / batch launchers** for Paper 26.2 + [EaglerXPaper](https://github.com/PlanetDogeCodes/EaglerXPaper). See [Creating a 26.2 Server](#creating-a-262-server) and the full [PLAN-26.2.md](PLAN-26.2.md).
+
 Every server version has a slightly different process and all of them will be properly described here. As of April 2025, there are 3 major versions:
 
+ - **26.2** (Paper + EaglerXPaper — see below)
  - 1.12.2
  - 1.8.8
  - 1.5.2
@@ -38,7 +43,69 @@ curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
 
 Done? Alright. So, first things first, we need to set up the actual (©) Minecraft server software, which for this tutorial we will use PaperMC, with a nice alternative being Cuberite. <br>
 Click the respective version to go to their section: <br>
-[1.12.2 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-1122-server),  [1.8.8 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-188-server),  [1.5.2 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-152-server),  [1.6.4 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-164-server)
+[26.2 Server](#creating-a-262-server), [1.12.2 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-1122-server),  [1.8.8 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-188-server),  [1.5.2 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-152-server),  [1.6.4 Server](https://github.com/NullClock/Eagler-Server-Tutorial/blob/main/README.md#creating-a-164-server)
+
+## Creating a 26.2 Server
+
+This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** browser clients (WASM builds). You run **Paper 26.2** with **EaglerXPaper** so one port accepts both WebSocket (Eagler) and normal Java TCP connections.
+
+### Requirements
+
+- **Java 25+** ([Temurin 25](https://adoptium.net/temurin/releases/?version=25))
+- **4 GB+ RAM**, **~10 GB** disk
+- **Python 3** (only for the one-time setup script)
+- Optional: [ngrok](https://ngrok.com/) or Cloudflare Tunnel for public `wss://` access
+
+### Quick start (CMD / batch on Windows)
+
+1. Open a terminal in this repo folder.
+2. Run setup once (downloads Paper + plugin into `server-26.2/`):
+
+   ```bat
+   python launch\setup.py
+   ```
+
+3. Start the server — either:
+   - Double-click **`launch\start-server.cmd`**, or
+   - Run **`launch\start-server.bat`**
+
+4. In your **Eaglercraft 26.2** client: **Multiplayer → Direct Connect** → `ws://127.0.0.1:25565/`
+
+5. Java Edition on the same PC: **`127.0.0.1:25565`**
+
+The first start may take a few minutes while Paper generates the world. Leave the window open while the server is running.
+
+### Quick start (Linux / macOS)
+
+```bash
+python3 launch/setup.py
+./launch/start-server.sh
+```
+
+### Public internet / school Chromebooks
+
+Browsers often require **`wss://`** (secure WebSocket) for online-hosted Eagler pages. Options:
+
+1. **Port-forward** TCP **25565** on your router and terminate TLS with Caddy/nginx in front, **or**
+2. Run **`launch\tunnel-ngrok.bat`** (after `ngrok config add-authtoken …`) and connect with the `wss://…` URL ngrok prints.
+
+> `online-mode` is set to **false** in the generated `server.properties` (cracked server). Use **AuthMe**, **nLogin**, or similar if you expose the server publicly.
+
+### Files added by this repo
+
+| Path | Purpose |
+|------|---------|
+| [PLAN-26.2.md](PLAN-26.2.md) | Architecture and checklist |
+| `launch/setup.py` | Download Paper 26.2 + EaglerXPaper, EULA, properties |
+| `launch/start-server.cmd` / `.bat` | Windows launcher |
+| `launch/start-server.sh` | Unix launcher |
+| `server-26.2/` | Created on setup (gitignored) |
+
+### Optional: `.exe` wrapper
+
+Git ships **`.cmd` / `.bat`** launchers, not a binary. To get a `.exe`, wrap `launch/start-server.cmd` with a bat-to-exe tool on your PC (see [PLAN-26.2.md](PLAN-26.2.md)).
+
+---
 
 ## Creating a 1.12.2 Server
 Go to the [all builds page](https://papermc.io/downloads/all) at [papermc.io](https://papermc.io) and find 1.12.2 in the sidebar, and make sure you're getting build #1620. The file should download into your computer. Make sure to put the ``.jar`` file into its own folder or else your Desktop/Downloads folder will get really cluttered and things will be hard to find. When you've done that, make sure you have Java 11 or higher installed, and run the file! You'll see the folder start to populate with files and the server will eventually exit, telling you to accept the EULA to continue. Go into eula.txt and change whatever's after the ``=`` to ``true``. Now, run the ``.jar`` file again.<br><br>
