@@ -75,6 +75,12 @@ function updateDashboardBits() {
 document.getElementById("btn-start").onclick = () => power("start");
 document.getElementById("btn-stop").onclick = () => power("stop");
 document.getElementById("btn-restart").onclick = () => power("restart");
+document.getElementById("btn-kill-all").onclick = () => {
+  if (!confirm("Force-stop Minecraft, Caddy (wss), and any stuck KyleTurski server processes?\n\nThe dashboard stays open.")) {
+    return;
+  }
+  power("kill-all");
+};
 
 async function power(action) {
   try {
@@ -84,7 +90,12 @@ async function power(action) {
       body: JSON.stringify({ action }),
     });
     setPill(state.status);
-    showToast(action === "start" ? "Server starting" : "Sent " + action);
+    if (action === "kill-all") {
+      const list = (state.status.killed || []).join(", ");
+      showToast(list ? "Killed: " + list : "No extra processes found (server stopped).");
+    } else {
+      showToast(action === "start" ? "Server starting" : "Sent " + action);
+    }
     if (state.page === "dashboard" || state.page === "console") render();
   } catch (error) {
     showToast(error.message);

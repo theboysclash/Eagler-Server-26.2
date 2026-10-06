@@ -58,6 +58,10 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
 
 ### Quick start (CMD / batch on Windows)
 
+**Easiest:** double-click **`KyleTurski-MC.bat`** in the repo folder (setup, HubEconomy build, dashboard — one file).
+
+Or step by step:
+
 1. Open a terminal in this repo folder.
 2. Run setup once (downloads Paper + plugin into `server-26.2/`):
 
@@ -66,10 +70,10 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
    ```
 
 3. Start the server — either:
-   - Double-click **`launch\start-server.cmd`**, or
+   - Double-click **`KyleTurski-MC.bat`** (recommended), **`launch\start-server.cmd`**, or
    - Run **`launch\start-server.bat`**
 
-   That opens a local dashboard in your browser at `http://127.0.0.1:8765`. Use it to start and stop the server, watch the console, and install or disable plugins. Leave the command window open.
+   That opens a local dashboard in your browser at `http://127.0.0.1:8765`. Use it to start and stop the server, watch the console, and install or disable plugins. Use **Kill all** in the sidebar to force-end Minecraft and Caddy if something is stuck. Leave the command window open.
 
 4. Start the public address (leave the Minecraft window open, then run this in a second window):
    - Windows: **`launch\start-wss.bat`**

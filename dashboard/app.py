@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -47,6 +48,7 @@ MODRINTH = "https://api.modrinth.com/v2"
 MODRINTH_UA = "KyleTurskiMC-Dashboard/1.0 (local server panel)"
 JOIN_RE = re.compile(r"\]: ([A-Za-z0-9_]{1,16}) joined the game")
 LEAVE_RE = re.compile(r"\]: ([A-Za-z0-9_]{1,16}) left the game")
+JVM_SERVER_MARKER = "-Dkyleturski.mc=1"
 
 runtime = None  # type: ignore
 
@@ -206,6 +208,93 @@ def modrinth_get(path: str) -> object:
         return json.loads(response.read().decode("utf-8"))
 
 
+def kill_related_server_processes(runtime: "MinecraftRuntime") -> list[str]:
+    """End Paper, Caddy, and other KyleTurski MC processes (not this dashboard)."""
+    runtime.force_stop()
+    killed: list[str] = []
+    my_pid = os.getpid()
+    server_path = str(SERVER_DIR.resolve())
+    marker = JVM_SERVER_MARKER
+
+    if os.name == "nt":
+        server_escaped = server_path.replace("'", "''")
+        script = (
+            f"$mine = {my_pid}; "
+            f"$marker = '{marker}'; "
+            f"$server = '{server_escaped}'; "
+            "Get-CimInstance Win32_Process | ForEach-Object { "
+            "  $procId = $_.ProcessId; "
+            "  if ($procId -eq $mine) { return }; "
+            "  $cmd = $_.CommandLine; "
+            "  if (-not $cmd) { return }; "
+            "  $hit = $false; "
+            "  $name = $_.Name; "
+            "  if ($cmd -like ('*' + $marker + '*')) { $hit = $true; $name = 'Minecraft' } "
+            "  elseif (($cmd -like '*caddy*') -and ($cmd -like '*Caddyfile*')) { $hit = $true; $name = 'Caddy' } "
+            "  elseif (($cmd -like '*paper.jar*') -and ($cmd -like ('*' + $server + '*'))) { $hit = $true; $name = 'Minecraft' }; "
+            "  if ($hit) { "
+            "    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue; "
+            "    Write-Output ($name + ' (pid ' + $procId + ')') "
+            "  } "
+            "}"
+        )
+        try:
+            out = subprocess.check_output(
+                ["powershell", "-NoProfile", "-Command", script],
+                text=True,
+                timeout=30,
+            )
+            killed = [line.strip() for line in out.splitlines() if line.strip()]
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        return killed
+
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        if pid == my_pid:
+            continue
+        try:
+            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode("utf-8", errors="replace")
+        except OSError:
+            continue
+        label = None
+        if marker in cmdline:
+            label = f"Minecraft (pid {pid})"
+        elif "caddy" in cmdline and "Caddyfile" in cmdline:
+            label = f"Caddy (pid {pid})"
+        elif "paper.jar" in cmdline and server_path in cmdline:
+            label = f"Minecraft (pid {pid})"
+        if not label:
+            continue
+        try:
+            os.kill(pid, signal.SIGTERM)
+            killed.append(label)
+        except ProcessLookupError:
+            continue
+    time.sleep(0.4)
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        if pid == my_pid:
+            continue
+        try:
+            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode("utf-8", errors="replace")
+        except OSError:
+            continue
+        if marker not in cmdline and not (
+            "caddy" in cmdline and "Caddyfile" in cmdline
+        ) and not ("paper.jar" in cmdline and server_path in cmdline):
+            continue
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    return killed
+
+
 class MinecraftRuntime:
     def __init__(self) -> None:
         self.proc: subprocess.Popen | None = None
@@ -252,6 +341,7 @@ class MinecraftRuntime:
         SERVER_DIR.mkdir(parents=True, exist_ok=True)
         command = [
             java,
+            JVM_SERVER_MARKER,
             f"-Xms{settings['minMemory']}",
             f"-Xmx{settings['maxMemory']}",
             "-jar",
@@ -324,6 +414,32 @@ class MinecraftRuntime:
             if self.running() and self.proc is not None:
                 self.proc.kill()
         return self.start()
+
+    def force_stop(self) -> None:
+        proc = self.proc
+        if proc is not None and proc.poll() is None:
+            try:
+                if proc.stdin is not None:
+                    proc.stdin.write("stop\n")
+                    proc.stdin.flush()
+            except OSError:
+                pass
+            for _ in range(16):
+                if proc.poll() is not None:
+                    break
+                time.sleep(0.5)
+            if proc.poll() is None:
+                proc.kill()
+                try:
+                    proc.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+        self.proc = None
+        self.state = "stopped"
+        self.players.clear()
+        self.cpu_percent = 0.0
+        self.memory_bytes = 0
+        self.append("Server process ended (force stop).")
 
     def _watch_stats(self) -> None:
         while self.running() and self.proc is not None:
@@ -732,6 +848,12 @@ class Handler(BaseHTTPRequestHandler):
             self._error(400, str(exc))
 
     def _power(self, action: str) -> None:
+        if action == "kill-all":
+            killed = kill_related_server_processes(runtime)
+            payload = runtime.status()
+            payload["killed"] = killed
+            self._send(200, payload)
+            return
         if action == "start":
             error = runtime.start()
         elif action == "stop":
