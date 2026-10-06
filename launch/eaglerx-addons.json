@@ -1,0 +1,47 @@
+{
+  "release": "v1.1.1",
+  "sourceUrl": "https://github.com/lax1dude/eaglerxserver/releases/tag/v1.1.1",
+  "note": "Setup already installs EaglerXPaper (modern EaglerXServer for Paper 26.2). Do not add EaglerXServer.jar — it would conflict.",
+  "addons": [
+    {
+      "id": "eaglermotd",
+      "fileName": "EaglerMOTD.jar",
+      "title": "EaglerMOTD",
+      "description": "Custom MOTD and server list text for Eagler browser clients (uses the EaglerX API).",
+      "url": "https://github.com/lax1dude/eaglerxserver/releases/download/v1.1.1/EaglerMOTD.jar",
+      "paperPlugin": true
+    },
+    {
+      "id": "eaglerweb",
+      "fileName": "EaglerWeb.jar",
+      "title": "EaglerWeb",
+      "description": "Serve small files over HTTP from your server address (skins, packs, etc.).",
+      "url": "https://github.com/lax1dude/eaglerxserver/releases/download/v1.1.1/EaglerWeb.jar",
+      "paperPlugin": true
+    },
+    {
+      "id": "eaglerxrewind",
+      "fileName": "EaglerXRewind.jar",
+      "title": "EaglerXRewind",
+      "description": "Let very old Eagler 1.5.2 clients join (protocol rewrite). Not needed if you only use Eagler 26.2.",
+      "url": "https://github.com/lax1dude/eaglerxserver/releases/download/v1.1.1/EaglerXRewind.jar",
+      "paperPlugin": true
+    },
+    {
+      "id": "eaglerxplan",
+      "fileName": "EaglerXPlan.jar",
+      "title": "EaglerXPlan",
+      "description": "Adds Eagler player data to the Plan analytics plugin (install Plan from Modrinth first).",
+      "url": "https://github.com/lax1dude/eaglerxserver/releases/download/v1.1.1/EaglerXPlan.jar",
+      "paperPlugin": true
+    },
+    {
+      "id": "eaglerxbackendrpc",
+      "fileName": "EaglerXBackendRPC.jar",
+      "title": "EaglerXBackendRPC",
+      "description": "Talk to a Bungee/Velocity Eagler proxy from a backend Spigot server. Only for split proxy networks.",
+      "url": "https://github.com/lax1dude/eaglerxserver/releases/download/v1.1.1/EaglerXBackendRPC.jar",
+      "paperPlugin": true
+    }
+  ]
+}
