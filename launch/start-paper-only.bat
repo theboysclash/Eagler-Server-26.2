@@ -22,5 +22,5 @@ echo Using: %JAVA%
 
 cd server-26.2
 echo Starting Paper. Leave this window open.
-"%JAVA%" -Xms2G -Xmx4G -jar paper.jar nogui
+"%JAVA%" -Dkyleturski.mc=1 -Xms2G -Xmx4G -jar paper.jar nogui
 pause

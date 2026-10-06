@@ -40,7 +40,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pill.stopped { background: #3a2024; color: #ffb4b4; }
 .pill.running { background: #163226; color: #9be7b8; }
 .pill.starting, .pill.stopping { background: #332a16; color: #f0d48a; }
-.power { display: flex; gap: 8px; margin-bottom: 18px; }
+.power { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.power .kill-all {
+  flex: 1 1 100%;
+  background: #5a1818;
+  border-color: #8a2828;
+  font-size: 13px;
+}
 .btn {
   border: 1px solid var(--line); background: #232833; border-radius: 8px;
   padding: 8px 10px; cursor: pointer;
