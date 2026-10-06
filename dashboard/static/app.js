@@ -119,7 +119,11 @@ function render() {
 
 function paintDashboard() {
   const status = state.status || { players: [], cpu: 0, memoryBytes: 0, memoryMaxBytes: 0, storageBytes: 0, diskFreeBytes: 0 };
+  const warnings = [];
+  if (!status.javaReady) warnings.push(status.javaHint || "Java 25+ required to start the server.");
+  if (!status.hubEconomyReady) warnings.push("HubEconomy.jar missing — run launch\\build-plugin.bat then launch\\setup.bat. /sell and /shop will not work.");
   main.innerHTML = `
+    ${warnings.length ? `<div class="banner">${warnings.map(esc).join(" ")}</div>` : ""}
     <div id="dash-banner" class="banner" ${status.state === "running" ? "hidden" : ""}>Server is stopped. Press Start to boot Paper 26.2 on this PC.</div>
     <div class="stats">
       <div class="card"><div class="label">Players</div><div class="value" id="stat-players"></div></div>

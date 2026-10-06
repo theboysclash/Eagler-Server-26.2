@@ -142,6 +142,22 @@ def main() -> int:
     if hub_jar.is_file():
         shutil.copy2(hub_jar, PLUGINS_DIR / "HubEconomy.jar")
         print(f"  copied {hub_jar.name} to {PLUGINS_DIR}")
+    else:
+        print()
+        print("WARNING: HubEconomy.jar is missing.")
+        print("  /sell, /shop, /hub, and the NPC will NOT work until you run:")
+        if sys.platform == "win32":
+            print("    launch\\build-plugin.bat")
+        else:
+            print("    ./launch/build-plugin.sh")
+        print("  Then run setup again to copy the jar into server-26.2/plugins/")
+
+    import_hub = REPO_ROOT / "import-worlds" / "hub" / "level.dat"
+    if import_hub.is_file():
+        dest = SERVER_DIR / "hub"
+        if not (dest / "level.dat").is_file():
+            shutil.copytree(import_hub.parent, dest, dirs_exist_ok=True)
+            print(f"  copied hub world from import-worlds/hub to {dest}")
 
     print()
     print("Setup complete.")

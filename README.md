@@ -137,6 +137,42 @@ Windows: `launch\build-plugin.bat`
 
 Right-click the green **Survival** villager at hub spawn to enter survival.
 
+**Custom hub map (too big for GitHub):** copy world files into `import-worlds/hub/` (see that folder’s README), run `launch\import-hub.bat`, restart, then **`/sethub`** once at spawn. Worlds live under `server-26.2/` on your PC only.
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| **Start does nothing** (dashboard) | Install **Java 25** ([Temurin](https://adoptium.net/temurin/releases/?version=25)). Run `launch\doctor.bat`. Try `launch\start-paper-only.bat` to see errors in the console. |
+| **`/sell`, `/shop`, `/hub` don’t work** | `HubEconomy.jar` is missing. Run `launch\build-plugin.bat`, then `launch\setup.bat` (or `python launch\setup.py`). |
+| **Spawn in normal survival, no hub** | Same as above — without HubEconomy you only get the default `world` from `server.properties`. |
+| **Python not found on Windows** | Use `launch\setup.bat` or install Python 3; `start-server.bat` tries `py -3` first. |
+
+One-time Windows order:
+
+```bat
+launch\setup.bat
+launch\build-plugin.bat
+launch\setup.bat
+launch\doctor.bat
+launch\start-server.cmd
+```
+
+The dashboard at `http://127.0.0.1:8765` shows yellow warnings if Java 25 or HubEconomy is missing.
+
+### Performance and FPS
+
+See [BLUEPRINT-PERFORMANCE.md](BLUEPRINT-PERFORMANCE.md) for the full plan. Implemented helpers:
+
+| What | How |
+|------|-----|
+| **Eagler preset** | Dashboard → **Performance** → **Apply Eagler preset** (view 7, sim 5, entity range 50%). Or run `python launch/performance_preset.py` |
+| **Measure lag** | Console: `/spark tps` (Paper bundles Spark). If TPS is ~20, stutter is client FPS |
+| **Chunky** | Dashboard → Performance → **Install Chunky**, restart, then **Run pregen commands** (survival, radius 500) |
+| **Client FPS** | Lower render distance in Eagler to match the server; reduce particles |
+
+Do not install ClearLagg, ViaVersion, or a second Spark jar on this 26.2 server. Add **LagFixer** from Modrinth only if `/spark profiler` shows item or mob lag.
+
 ---
 
 ## Creating a 1.12.2 Server

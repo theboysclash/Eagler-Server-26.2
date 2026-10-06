@@ -118,6 +118,18 @@ def find_java() -> str | None:
     opt = Path("/opt")
     if opt.is_dir():
         candidates.extend(str(path) for path in sorted(opt.glob("jdk-25*/bin/java")))
+    if os.name == "nt":
+        for pattern in (
+            Path(r"C:\Program Files\Eclipse Adoptium"),
+            Path(r"C:\Program Files\Java"),
+            Path(r"C:\Program Files\Microsoft"),
+        ):
+            if pattern.is_dir():
+                candidates.extend(
+                    str(path / "bin" / "java.exe")
+                    for path in sorted(pattern.glob("jdk-25*"))
+                    if (path / "bin" / "java.exe").is_file()
+                )
     for candidate in candidates:
         major = java_major(candidate)
         if major is not None and major >= 25:
@@ -398,6 +410,8 @@ class MinecraftRuntime:
             "motd": props.get("motd", "KyleTurski MC"),
             "port": int(props.get("server-port", "25565") or 25565),
             "javaReady": find_java() is not None,
+            "javaHint": "Install Temurin Java 25 and restart the dashboard, or set JAVA_HOME to jdk-25.",
+            "hubEconomyReady": (PLUGINS_DIR / "HubEconomy.jar").is_file(),
             "setupReady": (SERVER_DIR / "paper.jar").is_file(),
         }
 
