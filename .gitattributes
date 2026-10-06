@@ -1,0 +1,4 @@
+# Keep Windows batch files as CRLF inside the GitHub ZIP.
+# (eol=crlf alone stores LF in git; Download ZIP would still break cmd.exe.)
+*.bat -text
+*.cmd -text
