@@ -22,6 +22,7 @@ import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
 PERFORMANCE_PRESET = ROOT / "launch" / "performance_preset.py"
 
 
@@ -33,7 +34,6 @@ def load_performance_module():
     spec.loader.exec_module(module)
     return module
 
-ROOT = Path(__file__).resolve().parent.parent
 SERVER_DIR = ROOT / "server-26.2"
 PLUGINS_DIR = SERVER_DIR / "plugins"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
