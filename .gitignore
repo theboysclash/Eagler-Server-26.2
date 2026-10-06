@@ -6,6 +6,9 @@ server-26.2/
 plugins/hub-economy/build/
 plugins/hub-economy/.gradle/
 
+# Local dashboard settings
+dashboard/data/
+
 # OS / editor
 .DS_Store
 Thumbs.db

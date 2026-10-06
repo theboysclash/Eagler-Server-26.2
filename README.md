@@ -69,6 +69,8 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
    - Double-click **`launch\start-server.cmd`**, or
    - Run **`launch\start-server.bat`**
 
+   That opens a local dashboard in your browser at `http://127.0.0.1:8765`. Use it to start and stop the server, watch the console, and install or disable plugins. Leave the command window open.
+
 4. Start the public address (leave the Minecraft window open, then run this in a second window):
    - Windows: **`launch\start-wss.bat`**
    - Linux/macOS: **`./launch/start-wss.sh`**
