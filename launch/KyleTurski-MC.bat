@@ -1,68 +1,92 @@
 @echo off
-setlocal EnableExtensions
 title KyleTurski MC - setup and dashboard
 cd /d "%~dp0.."
+
+set "LOG=%~dp0last-run.log"
+echo ===== KyleTurski MC %date% %time% =====>"%LOG%"
+echo Repo: %CD%>>"%LOG%"
 
 echo.
 echo  ========================================
 echo   KyleTurski MC - one-click launcher
 echo  ========================================
+echo   Log: launch\last-run.log
 echo.
 
 call "%~dp0_resolve-python.bat"
 if errorlevel 1 goto :fail
+if not defined USE_PY_LAUNCHER if not defined USE_PYTHON goto :nopy
 
-echo Using: %PY_CMD%
-%PY_CMD% --version
+if defined USE_PY_LAUNCHER (
+  echo Using: py -3
+  echo Using: py -3>>"%LOG%"
+  py -3 --version
+) else (
+  echo Using: python
+  echo Using: python>>"%LOG%"
+  python --version
+)
 if errorlevel 1 goto :fail
 
-java -version >nul 2>&1
+java -version >>"%LOG%" 2>&1
 if errorlevel 1 (
   echo.
-  echo WARNING: Java not found on PATH. Setup may fail; you need Java 25 to run the server.
-  echo Install Temurin 25: https://adoptium.net/temurin/releases/?version=25
+  echo WARNING: Java not on PATH. You need Java 25 for the server and HubEconomy build.
+  echo https://adoptium.net/temurin/releases/?version=25
   echo.
 )
 
 echo [1/4] Server files (Paper 26.2 + EaglerXPaper)...
-%PY_CMD% launch\setup.py
-if errorlevel 1 goto :fail
+call "%~dp0_run-python.bat" launch\setup.py
+if errorlevel 1 (
+  echo Setup failed>>"%LOG%"
+  goto :fail
+)
 
 if not exist "server-26.2\plugins\HubEconomy.jar" (
   echo.
-  echo [2/4] Building HubEconomy (/sell, /shop, hub) - needs Java 25...
+  echo [2/4] Building HubEconomy - first time can take a few minutes...
   call "%~dp0build-plugin.bat"
-  if errorlevel 1 goto :fail
+  if errorlevel 1 (
+    echo HubEconomy build failed>>"%LOG%"
+    goto :fail
+  )
 ) else (
   echo.
   echo [2/4] HubEconomy already built.
 )
 
 echo.
-echo [3/4] Syncing plugins into server-26.2...
-%PY_CMD% launch\setup.py
+echo [3/4] Syncing plugins...
+call "%~dp0_run-python.bat" launch\setup.py
 if errorlevel 1 goto :fail
 
 if exist "import-worlds\hub\level.dat" (
   if not exist "server-26.2\hub\level.dat" (
-    echo.
-    echo Importing custom hub from import-worlds\hub ...
+    echo Importing hub world...
     call "%~dp0import-hub.bat" /nopause
-    if errorlevel 1 goto :fail
   )
 )
 
 echo.
-echo [4/4] Opening dashboard - click Start if the server is not already running.
-echo       Use Kill all in the sidebar to force-stop Minecraft and Caddy.
+echo [4/4] Starting dashboard (this window must stay open)...
 echo.
 call "%~dp0start-server.bat"
 exit /b %ERRORLEVEL%
 
+:nopy
+echo Python was not configured after resolve - see launch\last-run.log
+goto :fail
+
 :fail
+echo.>>"%LOG%"
+echo FAILED>>"%LOG%"
 echo.
-echo === Launcher stopped ===
-echo Run launch\doctor.bat for a checklist.
+echo === Something went wrong ===
+echo Open this file in Notepad:  launch\last-run.log
+echo Or run:  launch\doctor.bat
+echo.
+type "%LOG%"
 echo.
 pause
 exit /b 1

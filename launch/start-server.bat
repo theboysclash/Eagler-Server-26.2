@@ -1,9 +1,11 @@
 @echo off
-setlocal EnableExtensions
 cd /d "%~dp0.."
+set "LOG=%~dp0last-run.log"
 
 if not exist "server-26.2\paper.jar" (
-  echo Server not set up yet. Run KyleTurski-MC.bat or:  launch\setup.bat
+  echo Server not set up. Run KyleTurski-MC.bat first.
+  echo.>>"%LOG%"
+  echo ERROR: paper.jar missing>>"%LOG%"
   pause
   exit /b 1
 )
@@ -14,20 +16,18 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo Opening KyleTurski MC dashboard at http://127.0.0.1:8765
-echo Leave this window open while you play. Closing it stops the dashboard.
+echo Opening dashboard: http://127.0.0.1:8765
+echo Leave this window OPEN while you play.
+echo Dashboard starting...>>"%LOG%"
 echo.
-%PY_CMD% dashboard\app.py --open --autostart
+
+call "%~dp0_run-python.bat" dashboard\app.py --open --autostart
 set "RC=%ERRORLEVEL%"
+echo Dashboard exit code: %RC%>>"%LOG%"
+
 echo.
-if not "%RC%"=="0" (
-  echo Dashboard exited with error code %RC%.
-  echo Run launch\doctor.bat - need Python 3 and Java 25.
-) else (
-  echo Dashboard closed.
-)
-echo If the window vanished instantly before, another dashboard may already be running.
-echo Open http://127.0.0.1:8765 in your browser or close the other black window first.
+if not "%RC%"=="0" echo Dashboard error code %RC%. See launch\last-run.log
+if "%RC%"=="0" echo Dashboard closed.
 echo.
 pause
 exit /b %RC%

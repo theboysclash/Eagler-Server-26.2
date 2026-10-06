@@ -29,7 +29,8 @@ if exist "server-26.2\plugins\EaglerXPaper.jar" (echo OK EaglerXPaper) else if e
 if exist "server-26.2\hub\level.dat" (echo OK custom hub world folder) else (echo Hub world: will use small stone platform OR run launch\import-hub.bat)
 
 echo.
-echo Start: launch\start-server.cmd
+echo Start: KyleTurski-MC.bat  (repo root)
+echo Log:   launch\last-run.log
 echo Dashboard: http://127.0.0.1:8765
 echo If Start does nothing, read errors above then try launch\start-paper-only.bat
 echo.
