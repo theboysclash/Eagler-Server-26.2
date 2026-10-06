@@ -134,14 +134,14 @@ public final class SellMenuService implements Listener {
     }
 
     private void performSell(Player player, SellSession session) {
-        double total = 0.0;
+        long total = 0L;
         List<ItemStack> unsellable = new ArrayList<>();
         for (int slot = DEPOSIT_START; slot <= DEPOSIT_END; slot++) {
             ItemStack stack = session.inventory.getItem(slot);
             if (stack == null || stack.getType().isAir()) {
                 continue;
             }
-            double unit = worth.unitPrice(stack.getType());
+            long unit = worth.unitPrice(stack.getType());
             if (unit <= 0) {
                 unsellable.add(stack.clone());
                 session.inventory.setItem(slot, null);
@@ -156,7 +156,7 @@ public final class SellMenuService implements Listener {
         }
         if (total > 0) {
             economy.addBalance(player.getUniqueId(), total);
-            double balance = economy.getBalance(player.getUniqueId());
+            long balance = economy.getBalance(player.getUniqueId());
             player.sendMessage(Messages.success(
                     "Sold items for " + MoneyFormat.format(total) + ". Balance: " + MoneyFormat.format(balance)));
         } else if (unsellable.isEmpty()) {
@@ -166,7 +166,7 @@ public final class SellMenuService implements Listener {
     }
 
     private void updateSellButton(SellSession session) {
-        double preview = 0.0;
+        long preview = 0L;
         for (int slot = DEPOSIT_START; slot <= DEPOSIT_END; slot++) {
             ItemStack stack = session.inventory.getItem(slot);
             if (stack != null && !stack.getType().isAir()) {

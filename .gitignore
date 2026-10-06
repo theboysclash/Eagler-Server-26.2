@@ -1,3 +1,7 @@
+# Staging area for custom worlds (keep README only in git)
+import-worlds/hub/*
+!import-worlds/hub/README.md
+
 # Generated Paper server (downloaded by launch/setup.py)
 server-26.2/
 *.log
@@ -6,6 +10,11 @@ server-26.2/
 plugins/hub-economy/build/
 plugins/hub-economy/.gradle/
 
+# Local dashboard settings
+dashboard/data/
+
 # OS / editor
 .DS_Store
 Thumbs.db
+__pycache__/
+*.pyc

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KyleTurski MC</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">KT</div>
+        <div>
+          <div class="brand-name">KyleTurski</div>
+          <div class="brand-host">local dashboard</div>
+        </div>
+      </div>
+      <div id="status-pill" class="pill stopped">Stopped</div>
+      <div class="power">
+        <button id="btn-start" class="btn start">Start</button>
+        <button id="btn-stop" class="btn stop" disabled>Stop</button>
+        <button id="btn-restart" class="btn ghost">Restart</button>
+      </div>
+      <div class="nav-label">Overview</div>
+      <button class="nav active" data-page="dashboard">Dashboard</button>
+      <button class="nav" data-page="console">Console</button>
+      <button class="nav" data-page="settings">Settings</button>
+      <button class="nav" data-page="performance">Performance</button>
+      <div class="nav-label">Management</div>
+      <button class="nav" data-page="files">File Manager</button>
+      <button class="nav" data-page="plugins">Plugins</button>
+      <button class="nav" data-page="network">Network</button>
+      <button class="nav" data-page="properties">Properties</button>
+      <button class="nav" data-page="backups">Backups</button>
+      <button class="nav" data-page="team">Team</button>
+    </aside>
+    <main id="main"></main>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

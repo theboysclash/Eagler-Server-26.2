@@ -1,0 +1,32 @@
+# Eagler / browser-friendly server preset (see BLUEPRINT-PERFORMANCE.md)
+name: eagler
+server_properties:
+  view-distance: "7"
+  simulation-distance: "5"
+  entity-broadcast-range-percentage: "50"
+paper_world_defaults:
+  chunks:
+    max-auto-save-chunks-per-tick: 6
+  entities:
+    spawning:
+      per-player-mob-spawns: true
+  hopper:
+    cooldown-when-full: true
+  tick-rates:
+    behavior:
+      villager:
+        validatenearbypoi: 120
+client_tips:
+  - Keep render distance at or below the server view distance (7).
+  - Turn particles down or off in the Eagler client if FPS drops.
+  - Disable smooth lighting in the client when available.
+  - Prefer a desktop browser over a school Chromebook when you can.
+chunky:
+  modrinth_project: chunky
+  pregen_commands:
+    - chunky world survival
+    - chunky radius 500
+    - chunky start
+spark_commands:
+  check_tps: spark tps
+  profile: spark profiler

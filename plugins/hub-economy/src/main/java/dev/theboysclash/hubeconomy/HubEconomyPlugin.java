@@ -11,6 +11,9 @@ public final class HubEconomyPlugin extends JavaPlugin {
     private WorldService worldService;
     private HubNpc hubNpc;
     private SellMenuService sellMenuService;
+    private CoinSidebar coinSidebar;
+    private ShopMenu shopMenu;
+    private AuctionHouse auctionHouse;
 
     @Override
     public void onEnable() {
@@ -24,6 +27,12 @@ public final class HubEconomyPlugin extends JavaPlugin {
         worthCatalog = new WorthCatalog(this);
         worthCatalog.loadOrCreate();
 
+        coinSidebar = new CoinSidebar(this, economyStore);
+        economyStore.setBalanceChangeListener(coinSidebar::refresh);
+
+        auctionHouse = new AuctionHouse(this, economyStore);
+        auctionHouse.load();
+
         worldService = new WorldService(this, pluginConfig);
         worldService.setupWorlds();
 
@@ -31,9 +40,11 @@ public final class HubEconomyPlugin extends JavaPlugin {
         hubNpc.init();
 
         sellMenuService = new SellMenuService(this, economyStore, worthCatalog);
+        shopMenu = new ShopMenu(this, economyStore, worthCatalog);
 
         HubEconomyCommands commands = new HubEconomyCommands(
-                this, pluginConfig, worldService, hubNpc, economyStore, worthCatalog, sellMenuService);
+                this, pluginConfig, worldService, hubNpc, economyStore, worthCatalog,
+                sellMenuService, shopMenu, auctionHouse);
         register("sell", commands);
         register("bal", commands);
         register("balance", commands);
@@ -43,15 +54,23 @@ public final class HubEconomyPlugin extends JavaPlugin {
         register("sethub", commands);
         register("setsurvival", commands);
         register("hubeconomy", commands);
+        register("shop", commands);
+        register("ah", commands);
 
-        getServer().getPluginManager().registerEvents(new HubListener(this, pluginConfig, worldService, hubNpc), this);
+        getServer().getPluginManager().registerEvents(
+                new HubListener(this, pluginConfig, worldService, hubNpc, coinSidebar), this);
         getServer().getPluginManager().registerEvents(sellMenuService, this);
+        getServer().getPluginManager().registerEvents(shopMenu, this);
+        getServer().getPluginManager().registerEvents(auctionHouse, this);
 
         getLogger().info("HubEconomy enabled.");
     }
 
     @Override
     public void onDisable() {
+        if (auctionHouse != null) {
+            auctionHouse.save();
+        }
         if (economyStore != null) {
             economyStore.save();
         }

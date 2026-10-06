@@ -31,6 +31,12 @@ commands:
   hubeconomy:
     description: HubEconomy admin commands
     usage: /hubeconomy reload
+  shop:
+    description: Open the buy shop
+    usage: /shop
+  ah:
+    description: Auction house
+    usage: /ah [sell <coins>|collect]
 permissions:
   hubeconomy.use:
     description: Use hub economy player commands

@@ -69,6 +69,8 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
    - Double-click **`launch\start-server.cmd`**, or
    - Run **`launch\start-server.bat`**
 
+   That opens a local dashboard in your browser at `http://127.0.0.1:8765`. Use it to start and stop the server, watch the console, and install or disable plugins. Leave the command window open.
+
 4. Start the public address (leave the Minecraft window open, then run this in a second window):
    - Windows: **`launch\start-wss.bat`**
    - Linux/macOS: **`./launch/start-wss.sh`**
@@ -111,7 +113,7 @@ Git ships **`.cmd` / `.bat`** launchers, not a binary. To get a `.exe`, wrap `la
 
 ### Hub and sell shop
 
-This repo includes **HubEconomy** (`plugins/hub-economy/`): a hub world, a **Survival** NPC warp, and a Donut-style **`/sell`** chest menu.
+This repo includes **HubEconomy** (`plugins/hub-economy/`): a hub world, a **Survival** NPC warp, a Donut-style **`/sell`** chest menu, whole-coin balances with a right-side **sidebar**, **`/shop`** instant buy, and **`/ah`** player auctions.
 
 Build and install the plugin (Java 25):
 
@@ -124,14 +126,52 @@ Windows: `launch\build-plugin.bat`
 | Command | What it does |
 |---------|----------------|
 | `/sell` | Open the sell chest — deposit items, click the emerald **Sell** button |
-| `/bal` or `/balance` | Show your money (`/bal <player>` for admins) |
-| `/worth` | Unit price of the item in your main hand (includes enchant bonus) |
+| `/bal` or `/balance` | Show your coin balance (`/bal <player>` for admins); the sidebar also shows coins |
+| `/worth` | Sell price in coins for the item in your main hand (includes enchant bonus). Dirt is **1 coin** |
+| `/shop` | Buy items from the server shop (buy price is higher than sell-back) |
+| `/ah` | Auction house — browse listings; `/ah sell <coins>` to list your hand; `/ah collect` to take your unsold listings back |
 | `/hub` | Return to the hub (adventure mode) |
 | `/survival` | Go to survival (same as right-clicking the NPC) |
 | `/sethub`, `/setsurvival` | Set spawn points (admin) |
 | `/hubeconomy reload` | Reload prices and config (admin) |
 
 Right-click the green **Survival** villager at hub spawn to enter survival.
+
+**Custom hub map (too big for GitHub):** copy world files into `import-worlds/hub/` (see that folder’s README), run `launch\import-hub.bat`, restart, then **`/sethub`** once at spawn. Worlds live under `server-26.2/` on your PC only.
+
+### Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| **Start does nothing** (dashboard) | Install **Java 25** ([Temurin](https://adoptium.net/temurin/releases/?version=25)). Run `launch\doctor.bat`. Try `launch\start-paper-only.bat` to see errors in the console. |
+| **`/sell`, `/shop`, `/hub` don’t work** | `HubEconomy.jar` is missing. Run `launch\build-plugin.bat`, then `launch\setup.bat` (or `python launch\setup.py`). |
+| **Spawn in normal survival, no hub** | Same as above — without HubEconomy you only get the default `world` from `server.properties`. |
+| **Python not found on Windows** | Use `launch\setup.bat` or install Python 3; `start-server.bat` tries `py -3` first. |
+
+One-time Windows order:
+
+```bat
+launch\setup.bat
+launch\build-plugin.bat
+launch\setup.bat
+launch\doctor.bat
+launch\start-server.cmd
+```
+
+The dashboard at `http://127.0.0.1:8765` shows yellow warnings if Java 25 or HubEconomy is missing.
+
+### Performance and FPS
+
+See [BLUEPRINT-PERFORMANCE.md](BLUEPRINT-PERFORMANCE.md) for the full plan. Implemented helpers:
+
+| What | How |
+|------|-----|
+| **Eagler preset** | Dashboard → **Performance** → **Apply Eagler preset** (view 7, sim 5, entity range 50%). Or run `python launch/performance_preset.py` |
+| **Measure lag** | Console: `/spark tps` (Paper bundles Spark). If TPS is ~20, stutter is client FPS |
+| **Chunky** | Dashboard → Performance → **Install Chunky**, restart, then **Run pregen commands** (survival, radius 500) |
+| **Client FPS** | Lower render distance in Eagler to match the server; reduce particles |
+
+Do not install ClearLagg, ViaVersion, or a second Spark jar on this 26.2 server. Add **LagFixer** from Modrinth only if `/spark profiler` shows item or mob lag.
 
 ---
 

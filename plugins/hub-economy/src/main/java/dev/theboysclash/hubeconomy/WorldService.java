@@ -8,6 +8,7 @@ import org.bukkit.WorldType;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 
+import java.io.File;
 import java.util.Random;
 
 public final class WorldService {
@@ -30,10 +31,16 @@ public final class WorldService {
         String name = config.hubWorldName();
         World world = plugin.getServer().getWorld(name);
         if (world == null) {
+            File hubDir = new File(plugin.getServer().getWorldContainer(), name);
+            boolean imported = new File(hubDir, "level.dat").isFile();
             WorldCreator creator = new WorldCreator(name);
-            creator.type(WorldType.FLAT);
-            creator.generator(new HubPlatformGenerator());
             creator.environment(World.Environment.NORMAL);
+            if (!imported) {
+                creator.type(WorldType.FLAT);
+                creator.generator(new HubPlatformGenerator());
+            } else {
+                plugin.getLogger().info("Using imported hub world at " + hubDir.getAbsolutePath());
+            }
             world = creator.createWorld();
         }
         if (world != null) {
@@ -56,7 +63,14 @@ public final class WorldService {
     private void ensureDefaultSpawns() {
         World hub = plugin.getServer().getWorld(config.hubWorldName());
         if (hub != null && !config.hasConfiguredSpawn("hub")) {
-            Location spawn = new Location(hub, 0.5, 65.0, 0.5, 0f, 0f);
+            File hubDir = new File(plugin.getServer().getWorldContainer(), config.hubWorldName());
+            Location spawn;
+            if (new File(hubDir, "level.dat").isFile()) {
+                spawn = hub.getSpawnLocation().clone();
+                spawn.setY(Math.max(spawn.getY(), hub.getHighestBlockYAt(spawn) + 1));
+            } else {
+                spawn = new Location(hub, 0.5, 65.0, 0.5, 0f, 0f);
+            }
             config.setHubSpawn(spawn);
         }
         World survival = plugin.getServer().getWorld(config.survivalWorldName());
