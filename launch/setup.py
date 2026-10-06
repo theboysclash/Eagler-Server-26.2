@@ -153,14 +153,17 @@ def main() -> int:
     else:
         print("  ./launch/start-server.sh")
     print()
+    join_url = manifest.get("publicJoin", {}).get("url", "wss://KyleTurski.MC")
     print("Server list name: KyleTurski MC")
-    print("Eaglercraft 26.2 (offline HTML): Direct Connect →")
+    print("Eaglercraft 26.2 Direct Connect →")
+    print(f"  {join_url}")
+    print("Same computer, before DNS is set up:")
     print(f"  ws://127.0.0.1:{port}/")
-    print("Java Edition 26.2 on the same PC:")
+    print("Java Edition 26.2:")
     print(f"  127.0.0.1:{port}")
     print()
-    print("For friends on the internet, expose port 25565 or use ngrok / Cloudflare Tunnel")
-    print("(see README — Creating a 26.2 Server).")
+    print("For wss://KyleTurski.MC, start launch/start-wss.sh (or start-wss.bat)")
+    print("after the Minecraft server is running. Point that domain at this machine.")
     return 0
 
 

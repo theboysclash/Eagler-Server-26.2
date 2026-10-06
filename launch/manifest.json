@@ -20,5 +20,9 @@
     "serverPort": 25565,
     "minMemory": "2G",
     "maxMemory": "4G"
+  },
+  "publicJoin": {
+    "host": "KyleTurski.MC",
+    "url": "wss://KyleTurski.MC"
   }
 }

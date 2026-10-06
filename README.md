@@ -69,11 +69,13 @@ This is the **native Minecraft 26.2** path for community **Eaglercraft 26.2** br
    - Double-click **`launch\start-server.cmd`**, or
    - Run **`launch\start-server.bat`**
 
-4. In your **Eaglercraft 26.2** client: **Multiplayer → Direct Connect** → `ws://127.0.0.1:25565/`
+4. Start the public address (leave the Minecraft window open, then run this in a second window):
+   - Windows: **`launch\start-wss.bat`**
+   - Linux/macOS: **`./launch/start-wss.sh`**
+5. In **Eaglercraft 26.2**: **Multiplayer → Direct Connect** → `wss://KyleTurski.MC`
+6. Java Edition still uses a normal address: **`127.0.0.1:25565`** on the same PC, or your public IP with port **25565**. `wss://` is for the browser client.
 
-5. Java Edition on the same PC: **`127.0.0.1:25565`**
-
-The server list name is **KyleTurski MC**. The join address stays a host plus port **25565** (`127.0.0.1:25565` on the same PC). A port cannot be a name.
+`wss://KyleTurski.MC` works after the DNS name **KyleTurski.MC** points at the computer running the server, and ports **80** and **443** are open. Caddy gets the HTTPS certificate and forwards the secure WebSocket to the game on port 25565. On the same PC, before that DNS exists, you can still test with `ws://127.0.0.1:25565/`.
 
 The first start may take a few minutes while Paper generates the world. Leave the window open while the server is running.
 
@@ -84,12 +86,11 @@ python3 launch/setup.py
 ./launch/start-server.sh
 ```
 
-### Public internet / school Chromebooks
+### Public address
 
-Browsers often require **`wss://`** (secure WebSocket) for online-hosted Eagler pages. Options:
+Players use **`wss://KyleTurski.MC`**. That hostname has to be a domain you control. Point its DNS at this server, install [Caddy](https://caddyserver.com/docs/install), start the game, then run `launch/start-wss.sh` or `launch\start-wss.bat`.
 
-1. **Port-forward** TCP **25565** on your router and terminate TLS with Caddy/nginx in front, **or**
-2. Run **`launch\tunnel-ngrok.bat`** (after `ngrok config add-authtoken …`) and connect with the `wss://…` URL ngrok prints.
+`launch/tunnel-ngrok.bat` is only a fallback if you do not have that domain yet.
 
 > `online-mode` is set to **false** in the generated `server.properties` (cracked server). Use **AuthMe**, **nLogin**, or similar if you expose the server publicly.
 
@@ -101,6 +102,7 @@ Browsers often require **`wss://`** (secure WebSocket) for online-hosted Eagler 
 | `launch/setup.py` | Download Paper 26.2 + EaglerXPaper, EULA, properties |
 | `launch/start-server.cmd` / `.bat` | Windows launcher |
 | `launch/start-server.sh` | Unix launcher |
+| `launch/start-wss.bat` / `start-wss.sh` | HTTPS proxy so players join at `wss://KyleTurski.MC` |
 | `server-26.2/` | Created on setup (gitignored) |
 
 ### Optional: `.exe` wrapper
