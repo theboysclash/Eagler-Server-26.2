@@ -106,6 +106,7 @@ function render() {
     dashboard: paintDashboard,
     console: paintConsole,
     settings: paintSettings,
+    performance: paintPerformance,
     files: paintFiles,
     plugins: paintPlugins,
     network: paintNetwork,
@@ -396,6 +397,66 @@ async function loadModrinth(query) {
   }
 }
 
+async function paintPerformance() {
+  const data = await api("/api/performance");
+  const targets = data.targets || {};
+  main.innerHTML = `
+    <h1>Performance &amp; FPS</h1>
+    <p class="desc">Server plugins help TPS and how much the browser has to draw. They do not raise the Eagler FPS cap by themselves.</p>
+    <section class="card">
+      <div class="row"><strong>Eagler preset</strong><span>${data.matchesPreset ? "Applied" : "Not applied"}</span></div>
+      <p class="meta">Targets: view ${targets["view-distance"]}, sim ${targets["simulation-distance"]}, entity range ${targets["entity-broadcast-range-percentage"]}%</p>
+      <p class="meta">Current: view ${data.current["view-distance"] || "?"}, sim ${data.current["simulation-distance"] || "?"}, entity range ${data.current["entity-broadcast-range-percentage"] || "?"}%</p>
+      <p class="meta">Paper config: ${data.paperConfigExists ? "found" : "start the server once, then apply again"}</p>
+      <button class="btn primary" id="perf-apply">Apply Eagler preset</button>
+      <p class="meta">Restart the server after applying.</p>
+    </section>
+    <section class="card" style="margin-top:12px">
+      <div class="row"><strong>Chunky pregen</strong><span>${data.chunkyInstalled ? "Installed" : "Not installed"}</span></div>
+      <p class="desc">Pre-generates chunks around survival so the first players do not hitch the server.</p>
+      <div class="toolbar">
+        <button class="btn" id="chunky-install">Install Chunky</button>
+        <button class="btn" id="chunky-pregen">Run pregen commands</button>
+      </div>
+      <pre class="meta">${(data.chunkyCommands || []).join("\n")}</pre>
+    </section>
+    <section class="card" style="margin-top:12px">
+      <strong>Spark (built into Paper)</strong>
+      <p class="meta">Console: <code>${esc((data.sparkCommands || {}).check_tps || "spark tps")}</code> — if TPS is ~20, lag is client FPS. Use <code>${esc((data.sparkCommands || {}).profile || "spark profiler")}</code> before adding LagFixer.</p>
+    </section>
+    <section class="card" style="margin-top:12px">
+      <strong>Eagler client tips</strong>
+      <ul>${(data.clientTips || []).map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>
+    </section>`;
+  document.getElementById("perf-apply").onclick = async () => {
+    try {
+      const result = await api("/api/performance/apply", { method: "POST" });
+      showToast("Preset applied. Restart the server.");
+      if (result.warnings && result.warnings.length) showToast(result.warnings[0]);
+      paintPerformance();
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+  document.getElementById("chunky-install").onclick = async () => {
+    try {
+      const result = await api("/api/performance/chunky-install", { method: "POST" });
+      showToast("Installed " + result.name + ". Restart, then run pregen.");
+      paintPerformance();
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+  document.getElementById("chunky-pregen").onclick = async () => {
+    try {
+      await api("/api/performance/chunky-pregen", { method: "POST" });
+      showToast("Sent Chunky commands to the console.");
+    } catch (error) {
+      showToast(error.message);
+    }
+  };
+}
+
 async function paintNetwork() {
   const data = await api("/api/network");
   main.innerHTML = `
@@ -406,6 +467,7 @@ async function paintNetwork() {
       <p>Public Eaglercraft address: <strong>${data.publicEagler}</strong></p>
       <p class="meta">LAN addresses: ${data.lan.length ? data.lan.join(", ") : "none detected"}</p>
       <p class="meta">The public wss address still needs DNS and launch/start-wss.</p>
+      ${data.clientTips && data.clientTips.length ? `<ul>${data.clientTips.map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>` : ""}
     </section>`;
 }
 

@@ -90,7 +90,13 @@ When this plan is approved, the coding work is:
 3. Do not vendor the plugin jars in git. Install Chunky through the dashboard Modrinth installer so the file stays in `server-26.2/plugins/`.
 4. Re-check `/spark tps` after each phase and stop if TPS gets worse.
 
-## Out of scope
+## Implemented in this repo
+
+- `launch/performance-preset.yml` — target values
+- `launch/performance_preset.py` — CLI apply and status (`python launch/performance_preset.py`)
+- Dashboard **Performance** page — apply preset, install Chunky, run pregen console commands, client FPS tips
+- New installs from `launch/setup.py` use view distance **7** in the server template
+
 
 - Rewriting the Eagler 26.2 client renderer
 - Changing `wss://KyleTurski.MC`

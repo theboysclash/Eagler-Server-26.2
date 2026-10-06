@@ -16,9 +16,21 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
+import importlib.util
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+
+PERFORMANCE_PRESET = ROOT / "launch" / "performance_preset.py"
+
+
+def load_performance_module():
+    spec = importlib.util.spec_from_file_location("performance_preset", PERFORMANCE_PRESET)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("performance_preset.py could not be loaded")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 ROOT = Path(__file__).resolve().parent.parent
 SERVER_DIR = ROOT / "server-26.2"
@@ -556,6 +568,10 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/team":
                 self._team()
                 return
+            if path == "/api/performance":
+                perf = load_performance_module()
+                self._send(200, perf.performance_status(SERVER_DIR))
+                return
             self._error(404, "Not found")
         except Exception as exc:  # noqa: BLE001 - surface a safe message to the local UI
             self._error(400, str(exc))
@@ -622,6 +638,30 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/backups":
                 name = create_backup()
                 self._send(200, {"name": name})
+                return
+            if path == "/api/performance/apply":
+                perf = load_performance_module()
+                result = perf.apply_eagler_preset(SERVER_DIR)
+                self._send(200, result)
+                return
+            if path == "/api/performance/chunky-install":
+                perf = load_performance_module()
+                result = perf.modrinth_install_chunky(SERVER_DIR)
+                self._send(200, result)
+                return
+            if path == "/api/performance/chunky-pregen":
+                perf = load_performance_module()
+                preset = perf.load_preset()
+                commands = preset.get("chunky", {}).get("pregen_commands", [])
+                if not runtime.running():
+                    self._error(400, "Start the server before running Chunky pregen.")
+                    return
+                for command in commands:
+                    error = runtime.send(str(command))
+                    if error:
+                        self._error(400, error)
+                        return
+                self._send(200, {"ok": True, "commands": commands})
                 return
             self._error(404, "Not found")
         except Exception as exc:  # noqa: BLE001
@@ -794,6 +834,7 @@ class Handler(BaseHTTPRequestHandler):
             "localEagler": f"ws://127.0.0.1:{props.get('server-port', '25565')}/",
             "publicEagler": public.get("url", "wss://KyleTurski.MC"),
             "lan": addresses,
+            "clientTips": load_performance_module().load_preset().get("client_tips", []),
         })
 
     def _list_backups(self) -> None:
