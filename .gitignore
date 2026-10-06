@@ -9,3 +9,5 @@ plugins/hub-economy/.gradle/
 # OS / editor
 .DS_Store
 Thumbs.db
+__pycache__/
+*.pyc
