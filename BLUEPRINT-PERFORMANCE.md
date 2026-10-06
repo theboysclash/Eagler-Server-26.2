@@ -97,6 +97,7 @@ When this plan is approved, the coding work is:
 - Dashboard **Performance** page — apply preset, install Chunky, run pregen console commands, client FPS tips
 - New installs from `launch/setup.py` use view distance **7** in the server template
 
+## Out of scope
 
 - Rewriting the Eagler 26.2 client renderer
 - Changing `wss://KyleTurski.MC`
