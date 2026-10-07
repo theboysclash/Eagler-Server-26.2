@@ -1,7 +1,10 @@
 package dev.theboysclash.hubeconomy;
 
 import org.bukkit.command.PluginCommand;
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class HubEconomyPlugin extends JavaPlugin {
 
@@ -81,12 +84,23 @@ public final class HubEconomyPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (worldService != null) {
+            worldService.shutdown();
+        }
         if (auctionHouse != null) {
             auctionHouse.save();
         }
         if (economyStore != null) {
             economyStore.save();
         }
+    }
+
+    @Override
+    public @Nullable ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName, @Nullable String id) {
+        if ("hub".equalsIgnoreCase(worldName)) {
+            return new WorldService.HubPlatformGenerator();
+        }
+        return null;
     }
 
     public void reloadPluginConfig() {

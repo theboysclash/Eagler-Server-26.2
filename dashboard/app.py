@@ -421,10 +421,13 @@ class MinecraftRuntime:
         self.memory_bytes = 0
         self._cpu_sample: tuple[float, int] | None = None
         self._storage_cache = (0.0, 0)
+        self.saved_notice = False
         self.state = "stopped"
 
     def append(self, text: str) -> None:
         text = text.rstrip("\r\n")
+        if "Saved the game" in text:
+            self.saved_notice = True
         joined = JOIN_RE.search(text)
         if joined:
             self.players.add(joined.group(1))
@@ -507,11 +510,20 @@ class MinecraftRuntime:
         self.append("> " + text)
         return None
 
+    def flush_save(self) -> None:
+        self.saved_notice = False
+        self.send("save-all flush")
+        for _ in range(40):
+            if self.saved_notice or not self.running():
+                return
+            time.sleep(0.5)
+
     def stop(self) -> str | None:
         if not self.running():
             self.state = "stopped"
             return "Server is already stopped."
         self.state = "stopping"
+        self.flush_save()
         error = self.send("stop")
         if error:
             return error
@@ -522,7 +534,7 @@ class MinecraftRuntime:
             error = self.stop()
             if error and "already" not in error:
                 return error
-            for _ in range(60):
+            for _ in range(120):
                 if not self.running():
                     break
                 time.sleep(0.5)
@@ -533,6 +545,7 @@ class MinecraftRuntime:
     def force_stop(self) -> None:
         proc = self.proc
         if proc is not None and proc.poll() is None:
+            self.flush_save()
             try:
                 if proc.stdin is not None:
                     proc.stdin.write("stop\n")

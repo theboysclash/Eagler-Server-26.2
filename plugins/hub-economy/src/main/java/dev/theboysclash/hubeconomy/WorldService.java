@@ -8,6 +8,8 @@ import org.bukkit.WorldType;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 
+import org.bukkit.scheduler.BukkitTask;
+
 import java.io.File;
 import java.util.Random;
 
@@ -15,6 +17,8 @@ public final class WorldService {
 
     private final HubEconomyPlugin plugin;
     private final PluginConfig config;
+    private BukkitTask pendingSave;
+    private BukkitTask repeatingSave;
 
     public WorldService(HubEconomyPlugin plugin, PluginConfig config) {
         this.plugin = plugin;
@@ -25,6 +29,37 @@ public final class WorldService {
         ensureHubWorld();
         ensureSurvivalWorld();
         ensureDefaultSpawns();
+        saveWorlds();
+        repeatingSave = plugin.getServer().getScheduler().runTaskTimer(plugin, this::saveWorlds, 600L, 600L);
+    }
+
+    public void markDirty() {
+        if (pendingSave != null) {
+            return;
+        }
+        pendingSave = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            pendingSave = null;
+            saveWorlds();
+        }, 40L);
+    }
+
+    public void saveWorlds() {
+        for (World world : plugin.getServer().getWorlds()) {
+            world.setAutoSave(true);
+            world.save();
+        }
+    }
+
+    public void shutdown() {
+        if (pendingSave != null) {
+            pendingSave.cancel();
+            pendingSave = null;
+        }
+        if (repeatingSave != null) {
+            repeatingSave.cancel();
+            repeatingSave = null;
+        }
+        saveWorlds();
     }
 
     private void ensureHubWorld() {
@@ -39,13 +74,14 @@ public final class WorldService {
                 creator.type(WorldType.FLAT);
                 creator.generator(new HubPlatformGenerator());
             } else {
-                plugin.getLogger().info("Using imported hub world at " + hubDir.getAbsolutePath());
+                plugin.getLogger().info("Loading saved hub world at " + hubDir.getAbsolutePath());
             }
             world = creator.createWorld();
         }
         if (world != null) {
             world.setDifficulty(org.bukkit.Difficulty.PEACEFUL);
             world.setAutoSave(true);
+            world.save();
             world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(org.bukkit.GameRule.DO_MOB_SPAWNING, false);
             world.setGameRule(org.bukkit.GameRule.DO_WEATHER_CYCLE, false);
@@ -180,6 +216,36 @@ public final class WorldService {
     }
 
     public static final class HubPlatformGenerator extends ChunkGenerator {
+
+        @Override
+        public boolean shouldGenerateNoise() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldGenerateSurface() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldGenerateCaves() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldGenerateDecorations() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldGenerateMobs() {
+            return false;
+        }
+
+        @Override
+        public boolean shouldGenerateStructures() {
+            return false;
+        }
 
         @Override
         public ChunkGenerator.ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ,
