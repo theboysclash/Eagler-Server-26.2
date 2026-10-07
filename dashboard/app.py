@@ -733,13 +733,17 @@ def install_modrinth(project_id: str, version_id: str | None) -> dict:
         version = modrinth_get("/version/" + version_id)
         versions = [version]
     else:
-        query = urllib.parse.urlencode({
-            "loaders": json.dumps(["paper", "spigot", "bukkit"]),
-            "game_versions": json.dumps(["26.2"]),
-        })
-        versions = modrinth_get(f"/project/{project_id}/version?{query}")
+        versions = None
+        for game_version in ("26.2", "26.1", "1.21.11", None):
+            params = {"loaders": json.dumps(["paper", "spigot", "bukkit"])}
+            if game_version:
+                params["game_versions"] = json.dumps([game_version])
+            found = modrinth_get(f"/project/{project_id}/version?{urllib.parse.urlencode(params)}")
+            if isinstance(found, list) and found:
+                versions = found
+                break
     if not isinstance(versions, list) or not versions:
-        raise ValueError("No Paper build for Minecraft 26.2 was found for that plugin.")
+        raise ValueError("No Paper, Spigot, or Bukkit download was found for that plugin.")
     chosen = versions[0]
     files = chosen.get("files") or []
     primary = next((item for item in files if item.get("primary")), files[0] if files else None)
@@ -1074,8 +1078,8 @@ class Handler(BaseHTTPRequestHandler):
         }
         facet_groups = [
             ["project_type:plugin"],
-            ["versions:26.2"],
-            ["categories:paper"],
+            ["versions:26.2", "versions:26.1", "versions:1.21.11"],
+            ["categories:paper", "categories:spigot", "categories:bukkit"],
         ]
         if category in allowed:
             facet_groups.append([f"categories:{category}"])

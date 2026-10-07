@@ -100,7 +100,8 @@ public final class HubNpc {
         Villager villager = (Villager) npcLoc.getWorld().spawnEntity(npcLoc, EntityType.VILLAGER);
         villager.customName(Component.text("Survival", NamedTextColor.GREEN));
         villager.setCustomNameVisible(true);
-        villager.setAI(false);
+        villager.setAI(true);
+        villager.setAware(false);
         villager.setSilent(true);
         villager.setInvulnerable(true);
         villager.setGravity(false);

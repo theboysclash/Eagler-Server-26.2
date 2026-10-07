@@ -24,6 +24,7 @@ public final class HubListener implements Listener {
     private final HubNpc hubNpc;
     private final CoinSidebar coinSidebar;
     private final PasswordGate passwordGate;
+    private final java.util.Map<java.util.UUID, Long> survivalClicks = new java.util.HashMap<>();
 
     public HubListener(
             HubEconomyPlugin plugin,
@@ -104,12 +105,13 @@ public final class HubListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onInteractEntity(PlayerInteractEntityEvent event) {
-        if (hubNpc.isSurvivalNpc(event.getRightClicked())) {
-            event.setCancelled(true);
-            hubNpc.handleSurvivalWarp(event.getPlayer());
+        if (!hubNpc.isSurvivalNpc(event.getRightClicked())) {
+            return;
         }
+        event.setCancelled(true);
+        openSurvival(event.getPlayer());
     }
 
     @EventHandler
@@ -119,10 +121,14 @@ public final class HubListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onNpcHit(EntityDamageByEntityEvent event) {
-        if (hubNpc.isSurvivalNpc(event.getEntity())) {
-            event.setCancelled(true);
+        if (!hubNpc.isSurvivalNpc(event.getEntity())) {
+            return;
+        }
+        event.setCancelled(true);
+        if (event.getDamager() instanceof Player player) {
+            openSurvival(player);
         }
     }
 
@@ -147,7 +153,21 @@ public final class HubListener implements Listener {
         }
     }
 
-    @EventHandler
+    private void openSurvival(Player player) {
+        if (!passwordGate.isLoggedIn(player)) {
+            player.sendMessage(passwordGate.prompt(player));
+            return;
+        }
+        long now = System.currentTimeMillis();
+        Long last = survivalClicks.get(player.getUniqueId());
+        if (last != null && now - last < 2000L) {
+            return;
+        }
+        survivalClicks.put(player.getUniqueId(), now);
+        hubNpc.handleSurvivalWarp(player);
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onVillagerTrade(PlayerInteractEntityEvent event) {
         if (hubNpc.isSurvivalNpc(event.getRightClicked())) {
             event.setCancelled(true);

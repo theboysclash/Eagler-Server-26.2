@@ -114,6 +114,14 @@ document.querySelectorAll(".nav").forEach((button) => {
 });
 
 function render() {
+  try {
+    renderPage();
+  } catch (error) {
+    main.innerHTML = `<h1>Something went wrong</h1><p class="meta">${esc(error.message)}</p>`;
+  }
+}
+
+function renderPage() {
   const pages = {
     dashboard: paintDashboard,
     console: paintConsole,
@@ -451,7 +459,7 @@ async function loadModrinth(query) {
   try {
     const data = await api("/api/modrinth/search?q=" + encodeURIComponent(query) + "&category=" + encodeURIComponent(state.pluginFilter || ""));
     if (!data.hits.length) {
-      body.innerHTML = '<div class="empty">No Paper plugins for 26.2 matched that search.</div>';
+      body.innerHTML = '<div class="empty">No plugins matched that search. Try All, or a different word.</div>';
       return;
     }
     body.innerHTML = data.hits.map((hit) => `
