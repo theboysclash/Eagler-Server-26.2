@@ -18,9 +18,9 @@ if errorlevel 1 goto :fail
 if not defined USE_PY_LAUNCHER if not defined USE_PYTHON goto :nopy
 
 if defined USE_PY_LAUNCHER (
-  echo Using: py -3
-  echo Using: py -3>>"%LOG%"
-  py -3 --version
+  echo Using: %PY_LAUNCH%
+  echo Using: %PY_LAUNCH%>>"%LOG%"
+  %PY_LAUNCH% --version
 ) else (
   echo Using: python
   echo Using: python>>"%LOG%"
