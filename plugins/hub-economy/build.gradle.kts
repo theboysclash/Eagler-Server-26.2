@@ -14,10 +14,8 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.130-stable")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
-    }
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(25)
 }
 
 tasks.jar {

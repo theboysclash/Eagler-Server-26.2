@@ -9,7 +9,7 @@ if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "PATH=%JAVA_HOME%\b
 
 cd /d "%PLUGIN_DIR%"
 if not exist "gradlew.bat" goto :nogradle
-call gradlew.bat build
+call gradlew.bat build --stacktrace
 if errorlevel 1 goto :buildfail
 if not exist "%JAR%" goto :nojar
 if not exist "%DEST%" goto :nodest
