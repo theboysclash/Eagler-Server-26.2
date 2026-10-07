@@ -1253,6 +1253,21 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"ops": read_json("ops.json"), "whitelist": read_json("whitelist.json")})
 
 
+def open_dashboard(url: str) -> None:
+    print(f"Opening dashboard in your browser: {url}")
+    if os.name == "nt":
+        try:
+            os.startfile(url)
+            return
+        except OSError as exc:
+            print(f"Could not open the browser: {exc}")
+    try:
+        webbrowser.open(url)
+    except OSError as exc:
+        print(f"Could not open the browser: {exc}")
+        print(f"Open this address yourself: {url}")
+
+
 def serve(port: int, open_browser: bool, autostart: bool) -> None:
     global runtime
     runtime = MinecraftRuntime()
@@ -1265,7 +1280,7 @@ def serve(port: int, open_browser: bool, autostart: bool) -> None:
         if error:
             print(error)
     if open_browser:
-        threading.Timer(0.4, lambda: webbrowser.open(url)).start()
+        open_dashboard(url)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
@@ -1287,7 +1302,7 @@ def main() -> int:
             if getattr(exc, "errno", None) not in {98, 48, 10048}:
                 raise
             if open_browser:
-                webbrowser.open(f"http://{HOST}:{port}")
+                open_dashboard(f"http://{HOST}:{port}")
                 print(f"Dashboard already running at http://{HOST}:{port}")
                 print("Close the other dashboard command window, or use that tab in your browser.")
                 try:

@@ -47,8 +47,8 @@ echo.
 echo [2/4] Building HubEconomy (login, shop, hub)...
 call "%~dp0build-plugin.bat"
 if errorlevel 1 (
-  echo HubEconomy build failed>>"%LOG%"
-  goto :fail
+  echo HubEconomy build failed. The dashboard will still open.>>"%LOG%"
+  echo HubEconomy build failed. Continuing so the dashboard can open.
 )
 
 echo.
@@ -64,7 +64,8 @@ if exist "import-worlds\hub\level.dat" (
 )
 
 echo.
-echo [4/4] Starting dashboard (this window must stay open)...
+echo [4/4] Opening the dashboard at http://127.0.0.1:8765
+echo Leave this window open.
 echo.
 call "%~dp0start-server.bat"
 exit /b %ERRORLEVEL%
