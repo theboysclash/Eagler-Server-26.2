@@ -53,6 +53,40 @@ public final class PluginConfig {
         writeLocation("survival", location);
     }
 
+    public boolean hasNpcLocation(String id) {
+        return plugin.getConfig().isSet("npcs." + id + ".x");
+    }
+
+    public Location getNpcLocation(String id) {
+        if (!hasNpcLocation(id)) {
+            return null;
+        }
+        FileConfiguration config = plugin.getConfig();
+        String worldName = config.getString("npcs." + id + ".world", hubWorldName());
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            return null;
+        }
+        return new Location(
+                world,
+                config.getDouble("npcs." + id + ".x"),
+                config.getDouble("npcs." + id + ".y"),
+                config.getDouble("npcs." + id + ".z"),
+                (float) config.getDouble("npcs." + id + ".yaw"),
+                (float) config.getDouble("npcs." + id + ".pitch"));
+    }
+
+    public void setNpcLocation(String id, Location location) {
+        FileConfiguration config = plugin.getConfig();
+        config.set("npcs." + id + ".world", location.getWorld().getName());
+        config.set("npcs." + id + ".x", location.getX());
+        config.set("npcs." + id + ".y", location.getY());
+        config.set("npcs." + id + ".z", location.getZ());
+        config.set("npcs." + id + ".yaw", location.getYaw());
+        config.set("npcs." + id + ".pitch", location.getPitch());
+        plugin.saveConfig();
+    }
+
     private Location readLocation(String prefix, String worldName) {
         World world = Bukkit.getWorld(worldName);
         FileConfiguration config = plugin.getConfig();

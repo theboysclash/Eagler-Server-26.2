@@ -681,6 +681,8 @@ def admin_console_command(data: dict, action: str) -> str:
         return f"deop {name}"
     if action == "clear":
         return f"clear {name}"
+    if action == "hubtool":
+        return f"hubeconomy tool {name}"
     if action == "give":
         item = str(data.get("item", "stone")).strip().lower()
         if item.startswith("minecraft:"):

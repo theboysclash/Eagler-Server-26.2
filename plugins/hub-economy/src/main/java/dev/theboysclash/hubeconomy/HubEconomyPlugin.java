@@ -18,6 +18,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
     private ShopMenu shopMenu;
     private AuctionHouse auctionHouse;
     private PasswordGate passwordGate;
+    private HubTool hubTool;
 
     @Override
     public void onEnable() {
@@ -42,6 +43,8 @@ public final class HubEconomyPlugin extends JavaPlugin {
 
         hubNpc = new HubNpc(this, pluginConfig, worldService);
         hubNpc.init();
+        hubTool = new HubTool(this, pluginConfig, hubNpc);
+        hubTool.init();
 
         sellMenuService = new SellMenuService(this, economyStore, worthCatalog);
         shopMenu = new ShopMenu(this, economyStore, worthCatalog);
@@ -78,6 +81,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(shopMenu, this);
         getServer().getPluginManager().registerEvents(auctionHouse, this);
         getServer().getPluginManager().registerEvents(rtpMenu, this);
+        getServer().getPluginManager().registerEvents(hubTool, this);
 
         getLogger().info("HubEconomy enabled.");
     }
@@ -101,6 +105,10 @@ public final class HubEconomyPlugin extends JavaPlugin {
             return new WorldService.HubPlatformGenerator();
         }
         return null;
+    }
+
+    public HubTool hubTool() {
+        return hubTool;
     }
 
     public void reloadPluginConfig() {

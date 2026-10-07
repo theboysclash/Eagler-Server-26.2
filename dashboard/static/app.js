@@ -621,7 +621,9 @@ async function paintAdmin() {
         <button class="btn" data-admin="heal">Heal and feed</button>
         <button class="btn" data-admin="clear">Clear inventory</button>
         <button class="btn" data-admin="deop">Remove op</button>
+        <button class="btn primary" data-admin="hubtool">Give hub tool</button>
       </div>
+      <p class="meta">Hub tool: sneak and right-click to switch between hub spawn, survival spawn, and moving the Survival NPC. Right-click to apply it where you are standing. New NPCs can be added to that same tool later.</p>
       <label class="toolbar">Give item
         <input id="admin-item" value="stone" placeholder="oak_planks">
         <input id="admin-amount" value="64" style="width:70px">

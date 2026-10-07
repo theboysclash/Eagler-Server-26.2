@@ -55,19 +55,27 @@ public final class HubNpc {
         }
     }
 
-    private void spawnNpc() {
-        Location hubSpawn = config.getHubSpawn();
-        if (hubSpawn == null || hubSpawn.getWorld() == null) {
-            plugin.getLogger().warning("Cannot spawn hub NPC: hub spawn missing");
-            return;
-        }
-        Location npcLoc = hubSpawn.clone();
-        double yawRad = Math.toRadians(hubSpawn.getYaw());
-        npcLoc.add(-Math.sin(yawRad) * 2.0, 0, Math.cos(yawRad) * 2.0);
-        npcLoc.setYaw(hubSpawn.getYaw() + 180f);
-        npcLoc.setPitch(0f);
+    public void moveSurvivalNpc(Location location) {
+        config.setNpcLocation(NPC_VALUE_SURVIVAL, location);
+        respawn();
+    }
 
-        Villager villager = (Villager) hubSpawn.getWorld().spawnEntity(npcLoc, EntityType.VILLAGER);
+    private void spawnNpc() {
+        Location npcLoc = config.getNpcLocation(NPC_VALUE_SURVIVAL);
+        if (npcLoc == null || npcLoc.getWorld() == null) {
+            Location hubSpawn = config.getHubSpawn();
+            if (hubSpawn == null || hubSpawn.getWorld() == null) {
+                plugin.getLogger().warning("Cannot spawn hub NPC: hub spawn missing");
+                return;
+            }
+            npcLoc = hubSpawn.clone();
+            double yawRad = Math.toRadians(hubSpawn.getYaw());
+            npcLoc.add(-Math.sin(yawRad) * 2.0, 0, Math.cos(yawRad) * 2.0);
+            npcLoc.setYaw(hubSpawn.getYaw() + 180f);
+            npcLoc.setPitch(0f);
+        }
+
+        Villager villager = (Villager) npcLoc.getWorld().spawnEntity(npcLoc, EntityType.VILLAGER);
         villager.customName(Component.text("Survival", NamedTextColor.GREEN));
         villager.setCustomNameVisible(true);
         villager.setAI(false);

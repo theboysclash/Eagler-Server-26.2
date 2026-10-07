@@ -211,7 +211,6 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             return true;
         }
         config.setHubSpawn(player.getLocation());
-        hubNpc.respawn();
         player.sendMessage(Messages.success("Hub spawn saved."));
         return true;
     }
@@ -241,7 +240,22 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             sender.sendMessage(Messages.success("Reloaded config and values.yml."));
             return true;
         }
-        sender.sendMessage(Messages.info("Usage: /hubeconomy reload"));
+        if (args.length >= 1 && args[0].equalsIgnoreCase("tool")) {
+            if (args.length < 2) {
+                sender.sendMessage(Messages.error("Usage: /hubeconomy tool <player>"));
+                return true;
+            }
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage(Messages.error("Player not found."));
+                return true;
+            }
+            plugin.hubTool().give(target);
+            sender.sendMessage(Messages.success("Gave the hub tool to " + target.getName() + "."));
+            target.sendMessage(Messages.info("Hub tool: sneak + right-click to change mode, right-click to use it."));
+            return true;
+        }
+        sender.sendMessage(Messages.info("Usage: /hubeconomy reload | /hubeconomy tool <player>"));
         return true;
     }
 
@@ -252,7 +266,12 @@ public final class HubEconomyCommands implements CommandExecutor, TabCompleter {
             return List.of();
         }
         if (args.length == 1) {
-            return filterPrefix("reload", args[0]);
+            return java.util.stream.Stream.of("reload", "tool")
+                    .filter(option -> option.startsWith(args[0].toLowerCase(Locale.ROOT)))
+                    .toList();
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("tool")) {
+            return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         }
         return List.of();
     }
