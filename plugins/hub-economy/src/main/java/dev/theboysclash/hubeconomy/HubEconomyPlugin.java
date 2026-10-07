@@ -43,6 +43,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
         sellMenuService = new SellMenuService(this, economyStore, worthCatalog);
         shopMenu = new ShopMenu(this, economyStore, worthCatalog);
         passwordGate = new PasswordGate(this);
+        RtpMenu rtpMenu = new RtpMenu(this, worldService);
 
         HubEconomyCommands commands = new HubEconomyCommands(
                 this, pluginConfig, worldService, hubNpc, economyStore, worthCatalog,
@@ -62,6 +63,10 @@ public final class HubEconomyPlugin extends JavaPlugin {
         if (login != null) {
             login.setExecutor(passwordGate);
         }
+        PluginCommand rtp = getCommand("rtp");
+        if (rtp != null) {
+            rtp.setExecutor(rtpMenu);
+        }
 
         getServer().getPluginManager().registerEvents(
                 new HubListener(this, pluginConfig, worldService, hubNpc, coinSidebar, passwordGate), this);
@@ -69,6 +74,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(sellMenuService, this);
         getServer().getPluginManager().registerEvents(shopMenu, this);
         getServer().getPluginManager().registerEvents(auctionHouse, this);
+        getServer().getPluginManager().registerEvents(rtpMenu, this);
 
         getLogger().info("HubEconomy enabled.");
     }

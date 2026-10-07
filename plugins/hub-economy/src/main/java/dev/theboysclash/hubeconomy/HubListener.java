@@ -110,15 +110,6 @@ public final class HubListener implements Listener {
     }
 
     @EventHandler
-    public void onAdventureBreak(org.bukkit.event.block.BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        if (player.getWorld().getName().equals(config.hubWorldName())
-                && player.getGameMode() == GameMode.ADVENTURE) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
     public void onVillagerTrade(PlayerInteractEntityEvent event) {
         if (hubNpc.isSurvivalNpc(event.getRightClicked())) {
             event.setCancelled(true);

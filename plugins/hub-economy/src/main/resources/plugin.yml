@@ -40,6 +40,9 @@ commands:
   login:
     description: Register or log in with a password
     usage: /login <password> [password]
+  rtp:
+    description: Open the random teleport menu
+    usage: /rtp
 permissions:
   hubeconomy.use:
     description: Use hub economy player commands

@@ -124,6 +124,7 @@ function render() {
     properties: paintProperties,
     backups: paintBackups,
     team: paintTeam,
+    admin: paintAdmin,
   };
   (pages[state.page] || paintDashboard)();
 }
@@ -597,6 +598,69 @@ async function paintBackups() {
       showToast(error.message);
     }
   };
+}
+
+async function paintAdmin() {
+  const status = state.status || await api("/api/status");
+  const players = status.players || [];
+  const options = players.map((name) => `<option value="${esc(name)}">${esc(name)}</option>`).join("");
+  main.innerHTML = `
+    <h1>Admin</h1>
+    <section class="card">
+      <p class="meta">Join the server first, then pick your name. Builder turns on creative mode and op so you can fly and use give. Hub blocks save on their own. Use Save world before you stop.</p>
+      <label class="toolbar">Player
+        <select id="admin-player">
+          <option value="">Online players</option>
+          ${options}
+        </select>
+        <input id="admin-name" placeholder="or type a name">
+      </label>
+      <div class="toolbar">
+        <button class="btn primary" data-admin="builder">Make builder</button>
+        <button class="btn" data-admin="survival">Survival mode</button>
+        <button class="btn" data-admin="heal">Heal and feed</button>
+        <button class="btn" data-admin="clear">Clear inventory</button>
+        <button class="btn" data-admin="deop">Remove op</button>
+      </div>
+      <label class="toolbar">Give item
+        <input id="admin-item" value="stone" placeholder="oak_planks">
+        <input id="admin-amount" value="64" style="width:70px">
+        <button class="btn primary" data-admin="give">Give</button>
+      </label>
+      <button class="btn" data-admin="save">Save world</button>
+    </section>`;
+  main.querySelectorAll("[data-admin]").forEach((button) => {
+    button.onclick = () => runAdmin(button.dataset.admin);
+  });
+}
+
+function adminPlayerName() {
+  const typed = document.getElementById("admin-name").value.trim();
+  if (typed) return typed;
+  return document.getElementById("admin-player").value;
+}
+
+async function runAdmin(action) {
+  const body = {
+    action,
+    player: action === "save" ? "" : adminPlayerName(),
+    item: document.getElementById("admin-item").value,
+    amount: document.getElementById("admin-amount").value,
+  };
+  if (action !== "save" && !body.player) {
+    showToast("Pick or type a player name");
+    return;
+  }
+  try {
+    await api("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    showToast("Sent " + action);
+  } catch (error) {
+    showToast(error.message);
+  }
 }
 
 async function paintTeam() {

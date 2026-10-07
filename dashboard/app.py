@@ -648,6 +648,42 @@ class MinecraftRuntime:
         }
 
 
+def admin_console_command(data: dict, action: str) -> str:
+    if action == "save":
+        return "save-all flush"
+    name = str(data.get("player", "")).strip()
+    if not re.fullmatch(r"[A-Za-z0-9_]{1,16}", name):
+        raise ValueError("Enter the player's exact Minecraft name.")
+    if action == "heal":
+        return f"effect give {name} minecraft:instant_health 1 10 true"
+    if action == "feed":
+        return f"effect give {name} minecraft:saturation 1 10 true"
+    if action == "creative":
+        return f"gamemode creative {name}"
+    if action == "survival":
+        return f"gamemode survival {name}"
+    if action == "op":
+        return f"op {name}"
+    if action == "deop":
+        return f"deop {name}"
+    if action == "clear":
+        return f"clear {name}"
+    if action == "give":
+        item = str(data.get("item", "stone")).strip().lower()
+        if item.startswith("minecraft:"):
+            item = item.split(":", 1)[1]
+        if not re.fullmatch(r"[a-z0-9_]+", item):
+            raise ValueError("Use an item id like stone or oak_planks.")
+        try:
+            amount = int(data.get("amount", 1))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Amount must be a number.") from exc
+        if amount < 1 or amount > 64:
+            raise ValueError("Amount must be 1 to 64.")
+        return f"give {name} minecraft:{item} {amount}"
+    raise ValueError("Unknown admin action.")
+
+
 def list_plugins() -> list[dict]:
     PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
     plugins = []
@@ -883,6 +919,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/api/public":
                 self._public(str(data.get("action", "")))
+                return
+            if path == "/api/admin":
+                self._admin(data)
                 return
             if path == "/api/command":
                 error = runtime.send(str(data.get("command", "")))
@@ -1144,6 +1183,27 @@ class Handler(BaseHTTPRequestHandler):
             "lan": addresses,
             "clientTips": load_performance_module().load_preset().get("client_tips", []),
         })
+
+    def _admin(self, data: dict) -> None:
+        if not runtime.running():
+            self._error(400, "Start the server first.")
+            return
+        action = str(data.get("action", ""))
+        commands: list[str] = []
+        if action == "builder":
+            commands.append(admin_console_command(data, "op"))
+            commands.append(admin_console_command(data, "creative"))
+        elif action == "heal":
+            commands.append(admin_console_command(data, "heal"))
+            commands.append(admin_console_command(data, "feed"))
+        else:
+            commands.append(admin_console_command(data, action))
+        for command in commands:
+            error = runtime.send(command)
+            if error:
+                self._error(400, error)
+                return
+        self._send(200, {"ok": True, "commands": commands})
 
     def _public(self, action: str) -> None:
         if action == "stop":

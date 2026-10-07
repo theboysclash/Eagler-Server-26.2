@@ -45,6 +45,7 @@ public final class WorldService {
         }
         if (world != null) {
             world.setDifficulty(org.bukkit.Difficulty.PEACEFUL);
+            world.setAutoSave(true);
             world.setGameRule(org.bukkit.GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(org.bukkit.GameRule.DO_MOB_SPAWNING, false);
             world.setGameRule(org.bukkit.GameRule.DO_WEATHER_CYCLE, false);
@@ -58,6 +59,73 @@ public final class WorldService {
             creator.environment(World.Environment.NORMAL);
             creator.createWorld();
         }
+        ensureDimension(name + "_nether", World.Environment.NETHER);
+        ensureDimension(name + "_the_end", World.Environment.THE_END);
+    }
+
+    private void ensureDimension(String name, World.Environment environment) {
+        if (plugin.getServer().getWorld(name) != null) {
+            return;
+        }
+        WorldCreator creator = new WorldCreator(name);
+        creator.environment(environment);
+        World world = creator.createWorld();
+        if (world != null) {
+            world.setAutoSave(true);
+        }
+    }
+
+    public World rtpWorld(World.Environment environment) {
+        String base = config.survivalWorldName();
+        String name = switch (environment) {
+            case NETHER -> base + "_nether";
+            case THE_END -> base + "_the_end";
+            default -> base;
+        };
+        World world = plugin.getServer().getWorld(name);
+        if (world == null) {
+            ensureDimension(name, environment == World.Environment.NORMAL ? World.Environment.NORMAL : environment);
+            world = plugin.getServer().getWorld(name);
+        }
+        return world;
+    }
+
+    /**
+     * Picks a solid floor with two air blocks above it. Returns null if none is found.
+     */
+    public Location findRandomSafe(World world, int radius) {
+        java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        boolean nether = world.getEnvironment() == World.Environment.NETHER;
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int x = random.nextInt(radius * 2 + 1) - radius;
+            int z = random.nextInt(radius * 2 + 1) - radius;
+            world.getChunkAt(x >> 4, z >> 4).load(true);
+            int start = nether ? 110 : Math.min(world.getHighestBlockYAt(x, z), world.getMaxHeight() - 3);
+            int stop = nether ? 8 : world.getMinHeight() + 1;
+            for (int y = start; y > stop; y--) {
+                org.bukkit.block.Block floor = world.getBlockAt(x, y, z);
+                org.bukkit.block.Block feet = world.getBlockAt(x, y + 1, z);
+                org.bukkit.block.Block head = world.getBlockAt(x, y + 2, z);
+                if (!isSafeFloor(floor.getType()) || !feet.getType().isAir() || !head.getType().isAir()) {
+                    continue;
+                }
+                return new Location(world, x + 0.5, y + 1.0, z + 0.5);
+            }
+        }
+        return null;
+    }
+
+    private static boolean isSafeFloor(org.bukkit.Material type) {
+        if (!type.isSolid() || type.isAir()) {
+            return false;
+        }
+        String name = type.name();
+        return !name.contains("LAVA")
+                && !name.contains("FIRE")
+                && !name.contains("CACTUS")
+                && !name.contains("MAGMA")
+                && !name.contains("CAMPFIRE")
+                && !name.contains("BEDROCK");
     }
 
     private void ensureDefaultSpawns() {
@@ -96,7 +164,7 @@ public final class WorldService {
             return;
         }
         player.teleport(spawn);
-        player.setGameMode(GameMode.ADVENTURE);
+        player.setGameMode(GameMode.SURVIVAL);
         player.setFallDistance(0f);
     }
 
