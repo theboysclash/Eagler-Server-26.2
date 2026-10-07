@@ -10,9 +10,10 @@ import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.block.TileState;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -247,17 +248,15 @@ public final class SpawnerService implements Listener {
     private void refreshHologram(CreatureSpawner spawner) {
         removeHologram(spawner);
         Location loc = spawner.getLocation().add(0.5, 1.15, 0.5);
-        ArmorStand stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
-        stand.setVisible(false);
-        stand.setMarker(true);
-        stand.setGravity(false);
-        stand.setInvulnerable(true);
-        stand.setCustomNameVisible(true);
-        stand.setPersistent(true);
-        stand.setRemoveWhenFarAway(false);
+        TextDisplay label = (TextDisplay) loc.getWorld().spawnEntity(loc, EntityType.TEXT_DISPLAY);
+        label.setBillboard(Display.Billboard.CENTER);
+        label.setSeeThrough(false);
+        label.setViewRange(3.0f);
+        label.setPersistent(true);
+        label.setInvulnerable(true);
         int stack = readStack(spawner);
-        stand.customName(Component.text(stack + "x " + pretty(spawner.getSpawnedType()) + " Spawners", NamedTextColor.YELLOW));
-        spawner.getPersistentDataContainer().set(hologramKey, PersistentDataType.STRING, stand.getUniqueId().toString());
+        label.text(Component.text(stack + "x " + pretty(spawner.getSpawnedType()) + " Spawners", NamedTextColor.YELLOW));
+        spawner.getPersistentDataContainer().set(hologramKey, PersistentDataType.STRING, label.getUniqueId().toString());
         spawner.update();
     }
 

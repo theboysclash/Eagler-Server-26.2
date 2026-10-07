@@ -1,6 +1,7 @@
 const state = {
   page: "dashboard",
   pluginTab: "browse",
+  pluginFilter: "",
   consoleAfter: 0,
   filePath: "",
   status: null,
@@ -323,6 +324,7 @@ async function paintPlugins() {
       <input id="plugin-search" placeholder="Search plugins on Modrinth" style="flex:1">
       <button class="btn" id="plugin-go">Search</button>
     </div>
+    <div class="toolbar" id="plugin-filters"></div>
     <div id="plugin-body" class="grid"></div>`;
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.onclick = () => {
@@ -331,14 +333,38 @@ async function paintPlugins() {
     };
   });
   const toolbar = document.getElementById("plugin-toolbar");
+  const filters = document.getElementById("plugin-filters");
   if (state.pluginTab === "eagler") {
     toolbar.hidden = true;
+    filters.hidden = true;
     loadEaglerAddons();
   } else if (state.pluginTab === "installed") {
     toolbar.hidden = true;
+    filters.hidden = true;
     loadInstalled();
   } else {
     toolbar.hidden = false;
+    filters.hidden = false;
+    const filters = [
+      ["", "All"],
+      ["optimization", "Performance"],
+      ["economy", "Economy"],
+      ["utility", "Utility"],
+      ["management", "Admin"],
+      ["worldgen", "World"],
+      ["adventure", "Adventure"],
+      ["mobs", "Mobs"],
+      ["social", "Social"],
+    ];
+    document.getElementById("plugin-filters").innerHTML = filters.map(([id, label]) =>
+      `<button class="btn ${state.pluginFilter === id ? "primary" : ""}" data-filter="${id}">${label}</button>`
+    ).join("");
+    document.querySelectorAll("[data-filter]").forEach((button) => {
+      button.onclick = () => {
+        state.pluginFilter = button.dataset.filter;
+        paintPlugins();
+      };
+    });
     document.getElementById("plugin-go").onclick = () => loadModrinth(document.getElementById("plugin-search").value);
     document.getElementById("plugin-search").onkeydown = (event) => {
       if (event.key === "Enter") loadModrinth(event.target.value);
@@ -423,7 +449,7 @@ async function loadModrinth(query) {
   body.className = "grid";
   body.innerHTML = '<div class="empty">Searching Modrinth…</div>';
   try {
-    const data = await api("/api/modrinth/search?q=" + encodeURIComponent(query));
+    const data = await api("/api/modrinth/search?q=" + encodeURIComponent(query) + "&category=" + encodeURIComponent(state.pluginFilter || ""));
     if (!data.hits.length) {
       body.innerHTML = '<div class="empty">No Paper plugins for 26.2 matched that search.</div>';
       return;

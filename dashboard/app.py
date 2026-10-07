@@ -1067,11 +1067,19 @@ class Handler(BaseHTTPRequestHandler):
     def _modrinth_search(self, query: dict) -> None:
         text = query.get("q", [""])[0]
         offset = query.get("offset", ["0"])[0]
-        facets = json.dumps([
+        category = query.get("category", [""])[0]
+        allowed = {
+            "optimization", "economy", "utility", "management", "worldgen",
+            "adventure", "mobs", "social", "storage", "equipment",
+        }
+        facet_groups = [
             ["project_type:plugin"],
             ["versions:26.2"],
             ["categories:paper"],
-        ])
+        ]
+        if category in allowed:
+            facet_groups.append([f"categories:{category}"])
+        facets = json.dumps(facet_groups)
         params = urllib.parse.urlencode({
             "query": text,
             "limit": "18",

@@ -200,7 +200,9 @@ public final class WorldService {
             return;
         }
         player.teleport(spawn);
-        player.setGameMode(GameMode.SURVIVAL);
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            player.setGameMode(GameMode.ADVENTURE);
+        }
         player.setFallDistance(0f);
     }
 

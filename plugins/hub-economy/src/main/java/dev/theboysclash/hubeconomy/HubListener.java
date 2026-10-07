@@ -63,11 +63,10 @@ public final class HubListener implements Listener {
             worlds.markDirty();
             return;
         }
-        if (!passwordGate.isLoggedIn(player)) {
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            event.setCancelled(true);
             return;
         }
-        player.setGameMode(GameMode.SURVIVAL);
-        event.setCancelled(false);
         worlds.markDirty();
     }
 
@@ -77,11 +76,10 @@ public final class HubListener implements Listener {
         if (!player.getWorld().getName().equals(config.hubWorldName())) {
             return;
         }
-        if (!passwordGate.isLoggedIn(player)) {
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            event.setCancelled(true);
             return;
         }
-        player.setGameMode(GameMode.SURVIVAL);
-        event.setCancelled(false);
         worlds.markDirty();
     }
 
