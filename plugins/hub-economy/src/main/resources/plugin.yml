@@ -43,6 +43,12 @@ commands:
   rtp:
     description: Open the random teleport menu
     usage: /rtp
+  tp:
+    description: Ask to teleport to a player
+    usage: /tp <player>
+  tpa:
+    description: Accept a teleport request from a player
+    usage: /tpa <player>
 permissions:
   hubeconomy.use:
     description: Use hub economy player commands

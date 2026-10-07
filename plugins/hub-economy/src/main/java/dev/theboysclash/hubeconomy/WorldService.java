@@ -205,14 +205,24 @@ public final class WorldService {
     }
 
     public void sendToSurvival(Player player) {
-        Location spawn = config.getSurvivalSpawn();
-        if (spawn == null || spawn.getWorld() == null) {
-            player.sendMessage(Messages.error("Survival spawn is not set."));
+        World survival = survivalWorld();
+        if (survival == null) {
+            player.sendMessage(Messages.error("Survival world is not loaded."));
             return;
         }
-        player.teleport(spawn);
+        player.sendMessage(Messages.info("Looking for a random survival spot..."));
+        Location spot = findRandomSafe(survival, 2000);
+        if (spot == null) {
+            spot = config.getSurvivalSpawn();
+        }
+        if (spot == null || spot.getWorld() == null) {
+            player.sendMessage(Messages.error("No safe survival spot was found."));
+            return;
+        }
+        player.teleport(spot);
         player.setGameMode(GameMode.SURVIVAL);
         player.setFallDistance(0f);
+        player.sendMessage(Messages.success("You spawned in a random part of survival."));
     }
 
     public static final class HubPlatformGenerator extends ChunkGenerator {

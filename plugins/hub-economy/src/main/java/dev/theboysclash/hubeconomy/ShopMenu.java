@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,11 +27,13 @@ public final class ShopMenu implements Listener {
     private final HubEconomyPlugin plugin;
     private final EconomyStore economy;
     private final WorthCatalog worth;
+    private final SpawnerService spawners;
 
-    public ShopMenu(HubEconomyPlugin plugin, EconomyStore economy, WorthCatalog worth) {
+    public ShopMenu(HubEconomyPlugin plugin, EconomyStore economy, WorthCatalog worth, SpawnerService spawners) {
         this.plugin = plugin;
         this.economy = economy;
         this.worth = worth;
+        this.spawners = spawners;
     }
 
     public void open(Player player) {
@@ -71,6 +74,12 @@ public final class ShopMenu implements Listener {
             return;
         }
 
+        EntityType spawnerType = spawners.shopType(display);
+        if (spawnerType != null) {
+            buySpawner(player, spawnerType);
+            return;
+        }
+
         Material material = display.getType();
         int amount = event.isShiftClick() ? material.getMaxStackSize() : 1;
         long unitBuy = worth.buyPrice(material);
@@ -97,6 +106,16 @@ public final class ShopMenu implements Listener {
         if (event.getView().getTopInventory().getHolder() instanceof ShopSession) {
             event.setCancelled(true);
         }
+    }
+
+    private void buySpawner(Player player, EntityType type) {
+        long cost = spawners.price(type);
+        if (cost <= 0 || !economy.tryWithdraw(player.getUniqueId(), cost)) {
+            player.sendMessage(Messages.error("You cannot afford that (" + MoneyFormat.formatCoins(cost) + ")."));
+            return;
+        }
+        giveOrDrop(player, spawners.createItem(type, 1));
+        player.sendMessage(Messages.success("Bought a " + type.name().toLowerCase(Locale.ROOT) + " spawner for " + MoneyFormat.formatCoins(cost) + "."));
     }
 
     private static void giveOrDrop(Player player, ItemStack stack) {
@@ -145,7 +164,8 @@ public final class ShopMenu implements Listener {
         FOOD(2, "Food", Material.BREAD),
         FARMING(3, "Farming", Material.WHEAT),
         COMBAT(4, "Combat", Material.IRON_SWORD),
-        MISC(5, "Misc", Material.ENDER_PEARL);
+        MISC(5, "Misc", Material.ENDER_PEARL),
+        SPAWNERS(6, "Spawners", Material.SPAWNER);
 
         private final int slot;
         private final String label;
@@ -195,6 +215,7 @@ public final class ShopMenu implements Listener {
                 case MISC -> List.of(
                         Material.ENDER_PEARL, Material.BLAZE_ROD, Material.ENDER_CHEST,
                         Material.SHULKER_BOX, Material.TOTEM_OF_UNDYING, Material.ELYTRA);
+                case SPAWNERS -> List.of();
             };
         }
     }
@@ -288,6 +309,13 @@ public final class ShopMenu implements Listener {
             }
             for (ShopCategory cat : ShopCategory.values()) {
                 inventory.setItem(cat.slot(), categoryButton(cat, cat == category));
+            }
+            if (category == ShopCategory.SPAWNERS) {
+                int slot = 9;
+                for (ItemStack display : spawners.shopDisplays()) {
+                    inventory.setItem(slot++, display);
+                }
+                return;
             }
             List<Material> items = category.materials();
             int index = 0;

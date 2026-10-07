@@ -69,8 +69,10 @@ public final class HubListener implements Listener {
         Player player = event.getPlayer();
         if (player.getLastDeathLocation() != null
                 && player.getLastDeathLocation().getWorld() != null
-                && player.getLastDeathLocation().getWorld().getName().equals(config.survivalWorldName())) {
-            event.setRespawnLocation(config.getSurvivalSpawn());
+                && player.getLastDeathLocation().getWorld().getName().startsWith(config.survivalWorldName())) {
+            org.bukkit.World survival = worlds.survivalWorld();
+            org.bukkit.Location random = survival == null ? null : worlds.findRandomSafe(survival, 2000);
+            event.setRespawnLocation(random != null ? random : config.getSurvivalSpawn());
             plugin.getServer().getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
         } else {
             event.setRespawnLocation(config.getHubSpawn());

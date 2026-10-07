@@ -19,6 +19,7 @@ public final class HubEconomyPlugin extends JavaPlugin {
     private AuctionHouse auctionHouse;
     private PasswordGate passwordGate;
     private HubTool hubTool;
+    private SpawnerService spawnerService;
 
     @Override
     public void onEnable() {
@@ -47,9 +48,12 @@ public final class HubEconomyPlugin extends JavaPlugin {
         hubTool.init();
 
         sellMenuService = new SellMenuService(this, economyStore, worthCatalog);
-        shopMenu = new ShopMenu(this, economyStore, worthCatalog);
+        spawnerService = new SpawnerService(this);
+        spawnerService.init();
+        shopMenu = new ShopMenu(this, economyStore, worthCatalog, spawnerService);
         passwordGate = new PasswordGate(this);
         RtpMenu rtpMenu = new RtpMenu(this, worldService);
+        TeleportService teleports = new TeleportService();
 
         HubEconomyCommands commands = new HubEconomyCommands(
                 this, pluginConfig, worldService, hubNpc, economyStore, worthCatalog,
@@ -73,6 +77,8 @@ public final class HubEconomyPlugin extends JavaPlugin {
         if (rtp != null) {
             rtp.setExecutor(rtpMenu);
         }
+        registerTeleport("tp", teleports);
+        registerTeleport("tpa", teleports);
 
         getServer().getPluginManager().registerEvents(
                 new HubListener(this, pluginConfig, worldService, hubNpc, coinSidebar, passwordGate), this);
@@ -82,6 +88,8 @@ public final class HubEconomyPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(auctionHouse, this);
         getServer().getPluginManager().registerEvents(rtpMenu, this);
         getServer().getPluginManager().registerEvents(hubTool, this);
+        getServer().getPluginManager().registerEvents(spawnerService, this);
+        getServer().getPluginManager().registerEvents(teleports, this);
 
         getLogger().info("HubEconomy enabled.");
     }
@@ -114,6 +122,14 @@ public final class HubEconomyPlugin extends JavaPlugin {
     public void reloadPluginConfig() {
         reloadConfig();
         pluginConfig.ensureDefaults();
+    }
+
+    private void registerTeleport(String name, TeleportService teleports) {
+        PluginCommand command = getCommand(name);
+        if (command != null) {
+            command.setExecutor(teleports);
+            command.setTabCompleter(teleports);
+        }
     }
 
     private void register(String name, HubEconomyCommands commands) {
