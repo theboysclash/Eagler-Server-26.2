@@ -4,10 +4,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -18,7 +21,7 @@ import java.util.List;
 
 public final class HubTool implements Listener {
 
-    private static final List<String> MODES = List.of("hub-spawn", "survival-spawn", "npc:survival");
+    private static final List<String> MODES = List.of("hub-spawn", "survival-spawn", "npc:survival", "delete-npc");
 
     private final HubEconomyPlugin plugin;
     private final PluginConfig config;
@@ -81,6 +84,16 @@ public final class HubTool implements Listener {
             player.sendMessage(Messages.success("Survival spawn set to where you are standing."));
             return;
         }
+        if ("delete-npc".equals(mode)) {
+            Entity target = player.getTargetEntity(6);
+            if (target == null || !hubNpc.isHubNpc(target)) {
+                player.sendMessage(Messages.error("Look at an NPC and right-click to delete it."));
+                return;
+            }
+            hubNpc.deleteNpc(target);
+            player.sendMessage(Messages.success("NPC deleted. It will not come back after a restart."));
+            return;
+        }
         if (mode.startsWith("npc:")) {
             String id = mode.substring("npc:".length());
             if (!HubNpc.NPC_VALUE_SURVIVAL.equals(id)) {
@@ -92,6 +105,24 @@ public final class HubTool implements Listener {
             return;
         }
         player.sendMessage(Messages.error("Unknown tool mode. Sneak + right-click to reset it."));
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDeleteClick(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+        ItemStack item = player.getInventory().getItemInMainHand();
+        if (!isTool(item) || !"delete-npc".equals(modeOf(item))) {
+            return;
+        }
+        if (!player.hasPermission("hubeconomy.admin")) {
+            return;
+        }
+        if (!hubNpc.isHubNpc(event.getRightClicked())) {
+            return;
+        }
+        event.setCancelled(true);
+        hubNpc.deleteNpc(event.getRightClicked());
+        player.sendMessage(Messages.success("NPC deleted. It will not come back after a restart."));
     }
 
     private ItemStack createItem(String mode) {
@@ -141,6 +172,7 @@ public final class HubTool implements Listener {
             case "hub-spawn" -> "Mode: set hub spawn";
             case "survival-spawn" -> "Mode: set survival spawn";
             case "npc:survival" -> "Mode: move Survival NPC";
+            case "delete-npc" -> "Mode: delete the NPC you are looking at";
             default -> "Mode: " + mode;
         };
     }

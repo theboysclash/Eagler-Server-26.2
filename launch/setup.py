@@ -75,6 +75,9 @@ def ensure_server_properties(port: int) -> None:
             if line.startswith("motd="):
                 newline = "\n" if line.endswith("\n") else ""
                 lines.append("motd=KyleTurski MC" + newline)
+            elif line.startswith("spawn-protection="):
+                newline = "\n" if line.endswith("\n") else ""
+                lines.append("spawn-protection=0" + newline)
             else:
                 lines.append(line)
         dest.write_text("".join(lines), encoding="utf-8")

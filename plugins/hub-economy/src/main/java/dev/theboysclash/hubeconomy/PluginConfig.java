@@ -78,12 +78,29 @@ public final class PluginConfig {
 
     public void setNpcLocation(String id, Location location) {
         FileConfiguration config = plugin.getConfig();
+        config.set("npcs." + id + ".removed", false);
         config.set("npcs." + id + ".world", location.getWorld().getName());
         config.set("npcs." + id + ".x", location.getX());
         config.set("npcs." + id + ".y", location.getY());
         config.set("npcs." + id + ".z", location.getZ());
         config.set("npcs." + id + ".yaw", location.getYaw());
         config.set("npcs." + id + ".pitch", location.getPitch());
+        plugin.saveConfig();
+    }
+
+    public boolean isNpcRemoved(String id) {
+        return plugin.getConfig().getBoolean("npcs." + id + ".removed", false);
+    }
+
+    public void removeNpc(String id) {
+        FileConfiguration config = plugin.getConfig();
+        config.set("npcs." + id + ".removed", true);
+        config.set("npcs." + id + ".world", null);
+        config.set("npcs." + id + ".x", null);
+        config.set("npcs." + id + ".y", null);
+        config.set("npcs." + id + ".z", null);
+        config.set("npcs." + id + ".yaw", null);
+        config.set("npcs." + id + ".pitch", null);
         plugin.saveConfig();
     }
 

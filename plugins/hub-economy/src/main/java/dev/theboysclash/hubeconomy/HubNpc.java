@@ -35,6 +35,25 @@ public final class HubNpc {
         spawnNpc();
     }
 
+    public boolean isHubNpc(Entity entity) {
+        if (!(entity instanceof Villager villager) || npcKey == null) {
+            return false;
+        }
+        String id = villager.getPersistentDataContainer().get(npcKey, PersistentDataType.STRING);
+        return id != null && !id.isBlank();
+    }
+
+    public void deleteNpc(Entity entity) {
+        if (!(entity instanceof Villager villager) || npcKey == null) {
+            return;
+        }
+        String id = villager.getPersistentDataContainer().get(npcKey, PersistentDataType.STRING);
+        entity.remove();
+        if (id != null && !id.isBlank()) {
+            config.removeNpc(id);
+        }
+    }
+
     public boolean isSurvivalNpc(Entity entity) {
         if (!(entity instanceof Villager villager)) {
             return false;
@@ -61,6 +80,9 @@ public final class HubNpc {
     }
 
     private void spawnNpc() {
+        if (config.isNpcRemoved(NPC_VALUE_SURVIVAL)) {
+            return;
+        }
         Location npcLoc = config.getNpcLocation(NPC_VALUE_SURVIVAL);
         if (npcLoc == null || npcLoc.getWorld() == null) {
             Location hubSpawn = config.getHubSpawn();

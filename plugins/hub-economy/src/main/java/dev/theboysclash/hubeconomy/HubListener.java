@@ -50,12 +50,38 @@ public final class HubListener implements Listener {
     }
 
     @EventHandler
-    public void onHubPlace(BlockPlaceEvent event) {
+    public void onAnyPlace(BlockPlaceEvent event) {
+        if (!event.getPlayer().getWorld().getName().equals(config.hubWorldName())) {
+            worlds.markDirty();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onHubBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (!player.getWorld().getName().equals(config.hubWorldName())) {
+            worlds.markDirty();
+            return;
+        }
+        if (!passwordGate.isLoggedIn(player)) {
+            return;
+        }
+        player.setGameMode(GameMode.SURVIVAL);
+        event.setCancelled(false);
         worlds.markDirty();
     }
 
-    @EventHandler
-    public void onHubBreak(BlockBreakEvent event) {
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onHubPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
+        if (!player.getWorld().getName().equals(config.hubWorldName())) {
+            return;
+        }
+        if (!passwordGate.isLoggedIn(player)) {
+            return;
+        }
+        player.setGameMode(GameMode.SURVIVAL);
+        event.setCancelled(false);
         worlds.markDirty();
     }
 
@@ -80,7 +106,7 @@ public final class HubListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onInteractEntity(PlayerInteractEntityEvent event) {
         if (hubNpc.isSurvivalNpc(event.getRightClicked())) {
             event.setCancelled(true);
