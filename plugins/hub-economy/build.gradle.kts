@@ -14,10 +14,6 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.130-stable")
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    options.release.set(25)
-}
-
 tasks.jar {
     archiveFileName.set("HubEconomy.jar")
 }
