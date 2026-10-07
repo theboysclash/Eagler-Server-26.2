@@ -554,20 +554,28 @@ async function paintPerformance() {
 }
 
 async function paintNetwork() {
-  const data = await api("/api/network");
+  let data;
+  try {
+    data = await api("/api/network");
+  } catch (error) {
+    main.innerHTML = `<h1>Network</h1><p class="meta">${esc(error.message)}</p>`;
+    return;
+  }
+  const lan = Array.isArray(data.lan) ? data.lan : [];
+  const tips = Array.isArray(data.clientTips) ? data.clientTips : [];
   main.innerHTML = `
     <h1>Network</h1>
     <section class="card">
-      <p>Java on this PC: <strong>${data.localJava}</strong></p>
-      <p>Eaglercraft on this PC: <strong>${data.localEagler}</strong></p>
+      <p>Java on this PC: <strong>${esc(data.localJava)}</strong></p>
+      <p>Eaglercraft on this PC: <strong>${esc(data.localEagler)}</strong></p>
       <p>Free public Eagler address: <strong>${esc(data.tunnel && data.tunnel.eaglerUrl ? data.tunnel.eaglerUrl : "not started")}</strong></p>
       <p class="meta">Click the button, wait about 20 seconds, then paste that wss:// address into Eaglercraft Direct Connect. It changes every time you start it. Java players on this PC still use ${esc(data.localJava)}.</p>
       <div class="toolbar">
         <button class="btn primary" id="public-start">Start free public address</button>
         <button class="btn" id="public-stop">Stop public address</button>
       </div>
-      <p class="meta">LAN addresses: ${data.lan.length ? data.lan.join(", ") : "none detected"}</p>
-      ${data.clientTips && data.clientTips.length ? `<ul>${data.clientTips.map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>` : ""}
+      <p class="meta">LAN addresses: ${lan.length ? lan.map(esc).join(", ") : "none detected"}</p>
+      ${tips.length ? `<ul>${tips.map((tip) => `<li>${esc(tip)}</li>`).join("")}</ul>` : ""}
     </section>`;
   document.getElementById("public-start").onclick = async () => {
     showToast("Starting free public address…");

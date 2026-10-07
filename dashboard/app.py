@@ -1201,6 +1201,15 @@ class Handler(BaseHTTPRequestHandler):
                     addresses.append(ip)
         except OSError:
             pass
+        tips = [
+            "Keep the Eagler render distance at or below the server view distance.",
+            "Turn particles down in the browser client if the game stutters.",
+        ]
+        try:
+            loaded = load_performance_module().load_preset()
+            tips = loaded.get("client_tips") or loaded.get("clientTips") or tips
+        except Exception:
+            pass
         self._send(200, {
             "port": int(props.get("server-port", "25565") or 25565),
             "localJava": f"127.0.0.1:{props.get('server-port', '25565')}",
@@ -1208,7 +1217,7 @@ class Handler(BaseHTTPRequestHandler):
             "publicEagler": public_tunnel.eagler_url() or public.get("url", ""),
             "tunnel": public_tunnel.status(),
             "lan": addresses,
-            "clientTips": load_performance_module().load_preset().get("client_tips", []),
+            "clientTips": tips,
         })
 
     def _admin(self, data: dict) -> None:
